@@ -13,14 +13,27 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-
 Option Explicit
 
-Private Sub CmdBtnCancel_Click()
-    Unload TickerSymForm
-End Sub
+'===============================================================
+' Procedure:    ButtonCreateReport_Click
+'
+' Description:  Calls AnalyzeStock procedure to begin stock
+'               analysis of the company entered.
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+'Rev History:   09Sept14 by Janice Laset Parkerson
+'                - Initial Version
+'===============================================================
+Private Sub ButtonCreateReport_Click()
 
-Private Sub CmdBtnReport_Click()
     If TickerSymForm.TextBoxTickerSym.Text = "" Then
         MsgBox "You must enter a Ticker Symbol."
         Exit Sub
@@ -30,5 +43,28 @@ Private Sub CmdBtnReport_Click()
          
     Unload TickerSymForm
     AnalyzeStock
+    
 End Sub
 
+'===============================================================
+' Procedure:    ButtonCancel_Click
+'
+' Description:  Closes Stock Analysis form when user presses
+'               CANCEL button.
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+'Rev History:   09Sept14 by Janice Laset Parkerson
+'                - Initial Version
+'===============================================================
+Private Sub ButtonCancel_Click()
+
+    Unload TickerSymForm
+    
+End Sub
