@@ -1,60 +1,68 @@
 Attribute VB_Name = "BalanceSheet"
 Option Explicit
 
-Public Receivables1 As Double
-Public Receivables2 As Double
-Public Receivables3 As Double
-Public Receivables4 As Double
-Public Receivables5 As Double
+Global dblReceivables(0 To 4) As Double
+Global dblInventory(0 To 4) As Double
+Global dblCurrentAssets(0 To 4) As Double
+Global dblCurrentLiabilities(0 To 4) As Double
+Global dblLongTermDebt(0 To 4) As Double
+Global dblEquity(0 To 4) As Double
+Global iYear(0 To 4) As Integer
 
-Public Inventory1 As Double
-Public Inventory2 As Double
-Public Inventory3 As Double
-Public Inventory4 As Double
-Public Inventory5 As Double
+'===============================================================
+' Procedure:    CreateBalanceSheetStatement
+'
+' Description:  Call procedures to create Balance Sheet worksheet,
+'               acquire data from msnmoney.com, and format
+'               worksheet.
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+'Rev History:   09Sept14 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub CreateBalanceSheetStatement()
 
-Public CurrentAssets1 As Double
-Public CurrentAssets2 As Double
-Public CurrentAssets3 As Double
-Public CurrentAssets4 As Double
-Public CurrentAssets5 As Double
-
-Public CurrentLiabilities1 As Double
-Public CurrentLiabilities2 As Double
-Public CurrentLiabilities3 As Double
-Public CurrentLiabilities4 As Double
-Public CurrentLiabilities5 As Double
-
-Public LongTermDebt1 As Double
-Public LongTermDebt2 As Double
-Public LongTermDebt3 As Double
-Public LongTermDebt4 As Double
-Public LongTermDebt5 As Double
-
-Public Equity1 As Double
-Public Equity2 As Double
-Public Equity3 As Double
-Public Equity4 As Double
-Public Equity5 As Double
-
-'Create Cash Flow Worksheet with data from msnmoney.com
-Sub BalanceSheetStatement()
-
-    CreateBalanceSheet
-    GetBalanceSheet
+    CreateWorkSheetBalanceSheet
+    GetBalanceSheetAnnualData
     FormatBalanceSheet
 
 End Sub
 
-Sub CreateBalanceSheet()
+'===============================================================
+' Procedure:    CreateWorkSheetBalanceSheet
+'
+' Description:  Create worksheet named Balance Sheet - strTickerSym
+'               If duplicate worksheet exists, ask user to replace
+'               worksheet or cancel creation of new worksheet.
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+'Rev History:   09Sept14 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub CreateWorkSheetBalanceSheet()
 
-    Dim oSheet As Worksheet, vRet As Variant
+    Dim objSheet As Worksheet
+    Dim vRet As Variant
 
     On Error GoTo ErrorHandler
     
-    Set oSheet = Worksheets.Add
-    With oSheet
-        .Name = "Balance Sheet - " & TickerSym
+    Set objSheet = Worksheets.Add
+    With objSheet
+        .Name = "Balance Sheet - " & strTickerSym
         .Cells(1.1).Select
         .Activate
     End With
@@ -73,36 +81,51 @@ ErrorHandler:
         If vRet = vbYes Then
             'delete the old worksheet
             Application.DisplayAlerts = False
-            Worksheets("Balance Sheet - " & TickerSym).Delete
+            Worksheets("Balance Sheet - " & strTickerSym).Delete
             Application.DisplayAlerts = True
 
             'rename and activate the new worksheet
-            With oSheet
-                .Name = "Balance Sheet - " & TickerSym
+            With objSheet
+                .Name = "Balance Sheet - " & strTickerSym
                 .Cells(1.1).Select
                 .Activate
             End With
         Else
             'cancel the operation, delete the new worksheet
             Application.DisplayAlerts = False
-            oSheet.Delete
+            objSheet.Delete
             Application.DisplayAlerts = True
+            
             'activate the old worksheet
-            Worksheets("Balance Sheet - " & TickerSym).Activate
+            Worksheets("Balance Sheet - " & strTickerSym).Activate
         End If
 
     End If
     
 End Sub
 
-
-'Gets annual Balance Sheet statement from msnmoney.com
-Sub GetBalanceSheet()
+'===============================================================
+' Procedure:    GetBalanceSheetAnnualData
+'
+' Description:  Get annual Balance Sheet statement from msnmoney.com
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        Code generated using recorded macro
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   09Sept14 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub GetBalanceSheetAnnualData()
 
     On Error GoTo ErrorHandler
     
     With ActiveSheet.QueryTables.Add(Connection:= _
-        "URL;http://investing.money.msn.com/investments/stock-balance-sheet/?symbol=us%3A" & TickerSym & "&stmtView=Ann" _
+        "URL;http://investing.money.msn.com/investments/stock-balance-sheet/?symbol=us%3A" & strTickerSym & "&stmtView=Ann" _
         , Destination:=Range("$A$1"))
         .Name = "?symbol=us%3ASLP&stmtView=Ann"
         .FieldNames = True
@@ -141,11 +164,34 @@ ErrorHandler:
     
 End Sub
 
-'Assign account names to cells in Balance Sheet
+'===============================================================
+' Procedure:    FormatBalanceSheet
+'
+' Description:  Get info required from balance sheet and highlight
+'               items
+'               - receivables
+'               - inventory
+'               - current assets
+'               - current liabilities
+'               - long term debt
+'               - equity
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   09Sept11 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
 Sub FormatBalanceSheet()
 
-    Sheets("Balance Sheet - " & TickerSym).Activate
+    Sheets("Balance Sheet - " & strTickerSym).Activate
     
+    GetYears
     GetReceivables
     GetInventory
     GetCurrentAssets
@@ -153,141 +199,233 @@ Sub FormatBalanceSheet()
     GetLongTermDebt
     GetEquity
     
-    'Get Years
-    Sheets("Balance Sheet - " & TickerSym).Range("B1").Name = "Year1"
-    Sheets("Balance Sheet - " & TickerSym).Range("C1").Name = "Year2"
-    Sheets("Balance Sheet - " & TickerSym).Range("D1").Name = "Year3"
-    Sheets("Balance Sheet - " & TickerSym).Range("E1").Name = "Year4"
-    Sheets("Balance Sheet - " & TickerSym).Range("F1").Name = "Year5"
+End Sub
+
+'===============================================================
+' Procedure:    GetYears
+'
+' Description:  Get year values for financial report
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   09Sept11 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub GetYears()
+
+    iYear(0) = ActiveSheet.Range("B1").Value
+    iYear(1) = ActiveSheet.Range("C1").Value
+    iYear(2) = ActiveSheet.Range("D1").Value
+    iYear(3) = ActiveSheet.Range("E1").Value
+    iYear(4) = ActiveSheet.Range("F1").Value
 
 End Sub
 
+'===============================================================
+' Procedure:    GetReceivables
+'
+' Description:  Find Receivables information in balance sheet
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   09Sept11 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
 Sub GetReceivables()
 
     Dim Receivables As String
-
-    Receivables = "Receivables"
     
     On Error GoTo ErrorHandler
     
-    'Receivables
+    'account item term to search for in balance sheet
+    Receivables = "Receivables"
+    
+    'find receivables account item
     Columns("A:A").Select
     Selection.Find(What:=Receivables, After:=ActiveCell, LookIn:=xlFormulas, _
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    Receivables1 = Selection.Offset(0, 1).value
-    Receivables2 = Selection.Offset(0, 2).value
-    Receivables3 = Selection.Offset(0, 3).value
-    Receivables4 = Selection.Offset(0, 4).value
-    Receivables5 = Selection.Offset(0, 5).value
+    dblReceivables(0) = Selection.Offset(0, 1).Value
+    dblReceivables(1) = Selection.Offset(0, 2).Value
+    dblReceivables(2) = Selection.Offset(0, 3).Value
+    dblReceivables(3) = Selection.Offset(0, 4).Value
+    dblReceivables(4) = Selection.Offset(0, 5).Value
         
     Rows(ActiveCell.Row).Select
-    Selection.Font.ColorIndex = 5           'blue font
+    Selection.Font.ColorIndex = FONT_COLOR_BLUE
     
     Exit Sub
     
 ErrorHandler:
     MsgBox "No Receivables information."
    
-    Receivables1 = 0
-    Receivables2 = 0
-    Receivables3 = 0
-    Receivables4 = 0
-    Receivables5 = 0
+    dblReceivables(0) = 0
+    dblReceivables(1) = 0
+    dblReceivables(2) = 0
+    dblReceivables(3) = 0
+    dblReceivables(4) = 0
 
 End Sub
 
+'===============================================================
+' Procedure:    GetInventory
+'
+' Description:  Find Inventory information in balance sheet
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   09Sept11 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
 Sub GetInventory()
 
     Dim Inventory As String
     
-    Inventory = "Inventories"
-    
     On Error GoTo ErrorHandler
     
+    'account item term to search for in balance sheet
+    Inventory = "Inventories"
+    
+    'find inventory account item
     Columns("A:A").Select
     Selection.Find(What:=Inventory, After:=ActiveCell, LookIn:=xlFormulas, _
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    Inventory1 = Selection.Offset(0, 1).value
-    Inventory2 = Selection.Offset(0, 2).value
-    Inventory3 = Selection.Offset(0, 3).value
-    Inventory4 = Selection.Offset(0, 4).value
-    Inventory5 = Selection.Offset(0, 5).value
+    dblInventory(0) = Selection.Offset(0, 1).Value
+    dblInventory(1) = Selection.Offset(0, 2).Value
+    dblInventory(2) = Selection.Offset(0, 3).Value
+    dblInventory(3) = Selection.Offset(0, 4).Value
+    dblInventory(4) = Selection.Offset(0, 5).Value
 
     Rows(ActiveCell.Row).Select
-    Selection.Font.ColorIndex = 5           'blue font
+    Selection.Font.ColorIndex = FONT_COLOR_BLUE
         
     Exit Sub
         
 ErrorHandler:
    MsgBox "No Inventory information."
    
-   Inventory1 = 0
-   Inventory2 = 0
-   Inventory3 = 0
-   Inventory4 = 0
-   Inventory5 = 0
+   dblInventory(0) = 0
+   dblInventory(1) = 0
+   dblInventory(2) = 0
+   dblInventory(3) = 0
+   dblInventory(4) = 0
    
 End Sub
 
+'===============================================================
+' Procedure:    GetCurrentAssets
+'
+' Description:  Find current assets information in balance sheet
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   09Sept11 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
 Sub GetCurrentAssets()
 
     Dim CurrentAssets As String
     
-    CurrentAssets = "Total Current Assets"
-    
     On Error GoTo ErrorHandler
     
-    'Current Assets
+    'account item term to search for in balance sheet
+    CurrentAssets = "Total Current Assets"
+        
+    'find current assets account item
     Columns("A:A").Select
     Selection.Find(What:=CurrentAssets, After:=ActiveCell, LookIn:=xlFormulas, _
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    CurrentAssets1 = Selection.Offset(0, 1).value
-    CurrentAssets2 = Selection.Offset(0, 2).value
-    CurrentAssets3 = Selection.Offset(0, 3).value
-    CurrentAssets4 = Selection.Offset(0, 4).value
-    CurrentAssets5 = Selection.Offset(0, 5).value
+    dblCurrentAssets(0) = Selection.Offset(0, 1).Value
+    dblCurrentAssets(1) = Selection.Offset(0, 2).Value
+    dblCurrentAssets(2) = Selection.Offset(0, 3).Value
+    dblCurrentAssets(3) = Selection.Offset(0, 4).Value
+    dblCurrentAssets(4) = Selection.Offset(0, 5).Value
 
     Rows(ActiveCell.Row).Select
-    Selection.Font.ColorIndex = 5           'blue font
+    Selection.Font.ColorIndex = FONT_COLOR_BLUE
     
     Exit Sub
     
 ErrorHandler:
     MsgBox "No Current Assets information."
     
-    CurrentAssets1 = 0
-    CurrentAssets2 = 0
-    CurrentAssets3 = 0
-    CurrentAssets4 = 0
-    CurrentAssets5 = 0
+    dblCurrentAssets(0) = 0
+    dblCurrentAssets(0) = 0
+    dblCurrentAssets(0) = 0
+    dblCurrentAssets(0) = 0
+    dblCurrentAssets(0) = 0
 
 End Sub
 
+'===============================================================
+' Procedure:    GetCurrentLiabilities
+'
+' Description:  Find current liabilities information in balance sheet
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   09Sept11 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
 Sub GetCurrentLiabilities()
 
     Dim CurrentLiabilities As String
     
-    CurrentLiabilities = "Total Current Liabilities"
-    
     On Error GoTo ErrorHandler
     
-    'Current Liabilities
+    'account item term to search for in balance sheet
+    CurrentLiabilities = "Total Current Liabilities"
+        
+    'find current liabilities account item
     Columns("A:A").Select
     Selection.Find(What:=CurrentLiabilities, After:=ActiveCell, LookIn:=xlFormulas, _
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    CurrentLiabilities1 = Selection.Offset(0, 1).value
-    CurrentLiabilities2 = Selection.Offset(0, 2).value
-    CurrentLiabilities3 = Selection.Offset(0, 3).value
-    CurrentLiabilities4 = Selection.Offset(0, 4).value
-    CurrentLiabilities5 = Selection.Offset(0, 5).value
+    dblCurrentLiabilities(0) = Selection.Offset(0, 1).Value
+    dblCurrentLiabilities(1) = Selection.Offset(0, 2).Value
+    dblCurrentLiabilities(2) = Selection.Offset(0, 3).Value
+    dblCurrentLiabilities(3) = Selection.Offset(0, 4).Value
+    dblCurrentLiabilities(4) = Selection.Offset(0, 5).Value
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = 5           'blue font
@@ -297,33 +435,51 @@ Sub GetCurrentLiabilities()
 ErrorHandler:
     MsgBox "No Current Liabilities information."
     
-    CurrentLiabilities1 = 0
-    CurrentLiabilities2 = 0
-    CurrentLiabilities3 = 0
-    CurrentLiabilities4 = 0
-    CurrentLiabilities5 = 0
+    dblCurrentLiabilities(0) = 0
+    dblCurrentLiabilities(1) = 0
+    dblCurrentLiabilities(2) = 0
+    dblCurrentLiabilities(3) = 0
+    dblCurrentLiabilities(4) = 0
     
 End Sub
 
+'===============================================================
+' Procedure:    GetLongTermDebt
+'
+' Description:  Find long term debt information in balance sheet
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   09Sept11 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
 Sub GetLongTermDebt()
 
     Dim LongTermDebt As String
     
-    LongTermDebt = "Lt Debt and Capital Lease Obligation"
-    
     On Error GoTo ErrorHandler
     
-    'Long Term Debt
+    'account item term to search for in balance sheet
+    LongTermDebt = "Lt Debt and Capital Lease Obligation"
+    
+    'find long term debt account item
     Columns("A:A").Select
     Selection.Find(What:=LongTermDebt, After:=ActiveCell, LookIn:=xlFormulas, _
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    LongTermDebt1 = Selection.Offset(0, 1).value
-    LongTermDebt2 = Selection.Offset(0, 2).value
-    LongTermDebt3 = Selection.Offset(0, 3).value
-    LongTermDebt4 = Selection.Offset(0, 4).value
-    LongTermDebt5 = Selection.Offset(0, 5).value
+    dblLongTermDebt(0) = Selection.Offset(0, 1).Value
+    dblLongTermDebt(1) = Selection.Offset(0, 2).Value
+    dblLongTermDebt(2) = Selection.Offset(0, 3).Value
+    dblLongTermDebt(3) = Selection.Offset(0, 4).Value
+    dblLongTermDebt(4) = Selection.Offset(0, 5).Value
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = 5           'blue font
@@ -333,46 +489,64 @@ Sub GetLongTermDebt()
 ErrorHandler:
     MsgBox "No Long Term Debt information."
     
-    LongTermDebt1 = 0
-    LongTermDebt2 = 0
-    LongTermDebt3 = 0
-    LongTermDebt4 = 0
-    LongTermDebt5 = 0
+    dblLongTermDebt(0) = 0
+    dblLongTermDebt(1) = 0
+    dblLongTermDebt(2) = 0
+    dblLongTermDebt(3) = 0
+    dblLongTermDebt(4) = 0
     
 End Sub
 
+'===============================================================
+' Procedure:    GetEquity
+'
+' Description:  Find equity information in balance sheet
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   09Sept11 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
 Sub GetEquity()
 
     Dim Equity As String
     
-    Equity = "Total Equity"
-    
     On Error GoTo ErrorHandler
     
-    'Equity
+    'account item term to search for in balance sheet
+    Equity = "Total Equity"
+       
+    'find equity account item
     Columns("A:A").Select
     Selection.Find(What:=Equity, After:=ActiveCell, LookIn:=xlFormulas, _
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    Equity1 = Selection.Offset(0, 1).value
-    Equity2 = Selection.Offset(0, 2).value
-    Equity3 = Selection.Offset(0, 3).value
-    Equity4 = Selection.Offset(0, 4).value
-    Equity5 = Selection.Offset(0, 5).value
+    dblEquity(0) = Selection.Offset(0, 1).Value
+    dblEquity(1) = Selection.Offset(0, 2).Value
+    dblEquity(2) = Selection.Offset(0, 3).Value
+    dblEquity(3) = Selection.Offset(0, 4).Value
+    dblEquity(4) = Selection.Offset(0, 5).Value
 
     Rows(ActiveCell.Row).Select
-    Selection.Font.ColorIndex = 5           'blue font
+    Selection.Font.ColorIndex = FONT_COLOR_BLUE
     
     Exit Sub
     
 ErrorHandler:
     MsgBox "No Equity information."
     
-    Equity1 = 0
-    Equity2 = 0
-    Equity3 = 0
-    Equity4 = 0
-    Equity5 = 0
+    dblEquity(0) = 0
+    dblEquity(1) = 0
+    dblEquity(2) = 0
+    dblEquity(3) = 0
+    dblEquity(4) = 0
     
 End Sub
