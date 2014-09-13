@@ -1,4 +1,4 @@
-Attribute VB_Name = "BalanceSheet"
+Attribute VB_Name = "StatementBalanceSheet"
 Option Explicit
 
 Global dblReceivables(0 To 4) As Double
@@ -10,7 +10,7 @@ Global dblEquity(0 To 4) As Double
 Global iYear(0 To 4) As Integer
 
 '===============================================================
-' Procedure:    CreateBalanceSheetStatement
+' Procedure:    CreateStatementBalanceSheet
 '
 ' Description:  Call procedures to create Balance Sheet worksheet,
 '               acquire data from msnmoney.com, and format
@@ -24,14 +24,14 @@ Global iYear(0 To 4) As Integer
 '
 ' Returns:      N/A
 '
-'Rev History:   09Sept14 by Janice Laset Parkerson
+'Rev History:   09Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Sub CreateBalanceSheetStatement()
+Sub CreateStatementBalanceSheet()
 
     CreateWorkSheetBalanceSheet
-    GetBalanceSheetAnnualData
-    FormatBalanceSheet
+    GetAnnualDataBalanceSheet
+    FormatStatementBalanceSheet
 
 End Sub
 
@@ -50,7 +50,7 @@ End Sub
 '
 ' Returns:      N/A
 '
-'Rev History:   09Sept14 by Janice Laset Parkerson
+'Rev History:   09Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
 Sub CreateWorkSheetBalanceSheet()
@@ -105,7 +105,7 @@ ErrorHandler:
 End Sub
 
 '===============================================================
-' Procedure:    GetBalanceSheetAnnualData
+' Procedure:    GetAnnualDataBalanceSheet
 '
 ' Description:  Get annual Balance Sheet statement from msnmoney.com
 '
@@ -117,10 +117,10 @@ End Sub
 '
 ' Returns:      N/A
 '
-' Rev History:   09Sept14 by Janice Laset Parkerson
+' Rev History:   09Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Sub GetBalanceSheetAnnualData()
+Sub GetAnnualDataBalanceSheet()
 
     On Error GoTo ErrorHandler
     
@@ -165,7 +165,7 @@ ErrorHandler:
 End Sub
 
 '===============================================================
-' Procedure:    FormatBalanceSheet
+' Procedure:    FormatStatementBalanceSheet
 '
 ' Description:  Get info required from balance sheet and highlight
 '               items
@@ -184,10 +184,10 @@ End Sub
 '
 ' Returns:      N/A
 '
-' Rev History:   09Sept11 by Janice Laset Parkerson
+' Rev History:   11Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Sub FormatBalanceSheet()
+Sub FormatStatementBalanceSheet()
 
     Sheets("Balance Sheet - " & strTickerSym).Activate
     
@@ -214,16 +214,16 @@ End Sub
 '
 ' Returns:      N/A
 '
-' Rev History:   09Sept11 by Janice Laset Parkerson
+' Rev History:   11Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
 Sub GetYears()
 
-    iYear(0) = ActiveSheet.Range("B1").Value
-    iYear(1) = ActiveSheet.Range("C1").Value
-    iYear(2) = ActiveSheet.Range("D1").Value
-    iYear(3) = ActiveSheet.Range("E1").Value
-    iYear(4) = ActiveSheet.Range("F1").Value
+    iYear(0) = ActiveSheet.Range("B1").value
+    iYear(1) = ActiveSheet.Range("C1").value
+    iYear(2) = ActiveSheet.Range("D1").value
+    iYear(3) = ActiveSheet.Range("E1").value
+    iYear(4) = ActiveSheet.Range("F1").value
 
 End Sub
 
@@ -241,7 +241,7 @@ End Sub
 '
 ' Returns:      N/A
 '
-' Rev History:   09Sept11 by Janice Laset Parkerson
+' Rev History:   11Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
 Sub GetReceivables()
@@ -259,11 +259,11 @@ Sub GetReceivables()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblReceivables(0) = Selection.Offset(0, 1).Value
-    dblReceivables(1) = Selection.Offset(0, 2).Value
-    dblReceivables(2) = Selection.Offset(0, 3).Value
-    dblReceivables(3) = Selection.Offset(0, 4).Value
-    dblReceivables(4) = Selection.Offset(0, 5).Value
+    dblReceivables(0) = Selection.Offset(0, 1).value
+    dblReceivables(1) = Selection.Offset(0, 2).value
+    dblReceivables(2) = Selection.Offset(0, 3).value
+    dblReceivables(3) = Selection.Offset(0, 4).value
+    dblReceivables(4) = Selection.Offset(0, 5).value
         
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
@@ -295,7 +295,7 @@ End Sub
 '
 ' Returns:      N/A
 '
-' Rev History:   09Sept11 by Janice Laset Parkerson
+' Rev History:   11Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
 Sub GetInventory()
@@ -313,11 +313,11 @@ Sub GetInventory()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblInventory(0) = Selection.Offset(0, 1).Value
-    dblInventory(1) = Selection.Offset(0, 2).Value
-    dblInventory(2) = Selection.Offset(0, 3).Value
-    dblInventory(3) = Selection.Offset(0, 4).Value
-    dblInventory(4) = Selection.Offset(0, 5).Value
+    dblInventory(0) = Selection.Offset(0, 1).value
+    dblInventory(1) = Selection.Offset(0, 2).value
+    dblInventory(2) = Selection.Offset(0, 3).value
+    dblInventory(3) = Selection.Offset(0, 4).value
+    dblInventory(4) = Selection.Offset(0, 5).value
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
@@ -349,7 +349,7 @@ End Sub
 '
 ' Returns:      N/A
 '
-' Rev History:   09Sept11 by Janice Laset Parkerson
+' Rev History:   11Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
 Sub GetCurrentAssets()
@@ -367,11 +367,11 @@ Sub GetCurrentAssets()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblCurrentAssets(0) = Selection.Offset(0, 1).Value
-    dblCurrentAssets(1) = Selection.Offset(0, 2).Value
-    dblCurrentAssets(2) = Selection.Offset(0, 3).Value
-    dblCurrentAssets(3) = Selection.Offset(0, 4).Value
-    dblCurrentAssets(4) = Selection.Offset(0, 5).Value
+    dblCurrentAssets(0) = Selection.Offset(0, 1).value
+    dblCurrentAssets(1) = Selection.Offset(0, 2).value
+    dblCurrentAssets(2) = Selection.Offset(0, 3).value
+    dblCurrentAssets(3) = Selection.Offset(0, 4).value
+    dblCurrentAssets(4) = Selection.Offset(0, 5).value
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
@@ -403,7 +403,7 @@ End Sub
 '
 ' Returns:      N/A
 '
-' Rev History:   09Sept11 by Janice Laset Parkerson
+' Rev History:   11Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
 Sub GetCurrentLiabilities()
@@ -421,11 +421,11 @@ Sub GetCurrentLiabilities()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblCurrentLiabilities(0) = Selection.Offset(0, 1).Value
-    dblCurrentLiabilities(1) = Selection.Offset(0, 2).Value
-    dblCurrentLiabilities(2) = Selection.Offset(0, 3).Value
-    dblCurrentLiabilities(3) = Selection.Offset(0, 4).Value
-    dblCurrentLiabilities(4) = Selection.Offset(0, 5).Value
+    dblCurrentLiabilities(0) = Selection.Offset(0, 1).value
+    dblCurrentLiabilities(1) = Selection.Offset(0, 2).value
+    dblCurrentLiabilities(2) = Selection.Offset(0, 3).value
+    dblCurrentLiabilities(3) = Selection.Offset(0, 4).value
+    dblCurrentLiabilities(4) = Selection.Offset(0, 5).value
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = 5           'blue font
@@ -457,7 +457,7 @@ End Sub
 '
 ' Returns:      N/A
 '
-' Rev History:   09Sept11 by Janice Laset Parkerson
+' Rev History:   11Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
 Sub GetLongTermDebt()
@@ -475,11 +475,11 @@ Sub GetLongTermDebt()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblLongTermDebt(0) = Selection.Offset(0, 1).Value
-    dblLongTermDebt(1) = Selection.Offset(0, 2).Value
-    dblLongTermDebt(2) = Selection.Offset(0, 3).Value
-    dblLongTermDebt(3) = Selection.Offset(0, 4).Value
-    dblLongTermDebt(4) = Selection.Offset(0, 5).Value
+    dblLongTermDebt(0) = Selection.Offset(0, 1).value
+    dblLongTermDebt(1) = Selection.Offset(0, 2).value
+    dblLongTermDebt(2) = Selection.Offset(0, 3).value
+    dblLongTermDebt(3) = Selection.Offset(0, 4).value
+    dblLongTermDebt(4) = Selection.Offset(0, 5).value
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = 5           'blue font
@@ -511,7 +511,7 @@ End Sub
 '
 ' Returns:      N/A
 '
-' Rev History:   09Sept11 by Janice Laset Parkerson
+' Rev History:   11Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
 Sub GetEquity()
@@ -529,11 +529,11 @@ Sub GetEquity()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblEquity(0) = Selection.Offset(0, 1).Value
-    dblEquity(1) = Selection.Offset(0, 2).Value
-    dblEquity(2) = Selection.Offset(0, 3).Value
-    dblEquity(3) = Selection.Offset(0, 4).Value
-    dblEquity(4) = Selection.Offset(0, 5).Value
+    dblEquity(0) = Selection.Offset(0, 1).value
+    dblEquity(1) = Selection.Offset(0, 2).value
+    dblEquity(2) = Selection.Offset(0, 3).value
+    dblEquity(3) = Selection.Offset(0, 4).value
+    dblEquity(4) = Selection.Offset(0, 5).value
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE

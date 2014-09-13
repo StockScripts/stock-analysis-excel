@@ -1,4 +1,4 @@
-Attribute VB_Name = "CashFlow"
+Attribute VB_Name = "StatementCashFlow"
 Option Explicit
 
 Global dblOpCashFlow(0 To 4) As Double
