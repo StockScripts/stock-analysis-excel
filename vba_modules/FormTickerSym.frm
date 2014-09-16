@@ -1,14 +1,14 @@
 VERSION 5.00
-Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} TickerSymForm 
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} FormTickerSym 
    Caption         =   "Ticker Symbol"
    ClientHeight    =   2805
    ClientLeft      =   45
    ClientTop       =   345
    ClientWidth     =   4845
-   OleObjectBlob   =   "TickerSymForm.frx":0000
+   OleObjectBlob   =   "FormTickerSym.frx":0000
    StartUpPosition =   1  'CenterOwner
 End
-Attribute VB_Name = "TickerSymForm"
+Attribute VB_Name = "FormTickerSym"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
@@ -34,14 +34,14 @@ Option Explicit
 '===============================================================
 Private Sub ButtonCreateReport_Click()
 
-    If TickerSymForm.TextBoxTickerSym.Text = "" Then
+    If FormTickerSym.TextBoxTickerSym.Text = "" Then
         MsgBox "You must enter a Ticker Symbol."
         Exit Sub
     End If
         
-    TickerSym = TickerSymForm.TextBoxTickerSym.Text
+    strTickerSym = FormTickerSym.TextBoxTickerSym.Text
          
-    Unload TickerSymForm
+    Unload FormTickerSym
     AnalyzeStock
     
 End Sub
@@ -65,6 +65,6 @@ End Sub
 '===============================================================
 Private Sub ButtonCancel_Click()
 
-    Unload TickerSymForm
+    Unload FormTickerSym
     
 End Sub
