@@ -55,8 +55,8 @@ End Sub
 '===============================================================
 ' Procedure:    CalculateRevenueYOYGrowth
 '
-' Description:  Call procedure to calculate YOY growth for
-'               revenue data. Format cells and display YOY growth.
+' Description:  Call procedure to calculate and display YOY
+'               growth for revenue data. Format cells.
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -71,7 +71,7 @@ End Sub
 '===============================================================
 Sub CalculateRevenueYOYGrowth()
 
-    Dim dblYOYGrowth(0 To 4) As Double
+    Dim dblYOYGrowth(0 To 3) As Double
     
     'name YOY cell
     Range("B4").Name = "YOYGrowth"
