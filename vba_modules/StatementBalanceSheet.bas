@@ -4,10 +4,11 @@ Option Explicit
 Global dblReceivables(0 To 4) As Double
 Global dblInventory(0 To 4) As Double
 Global dblCurrentAssets(0 To 4) As Double
+Global dblAssets(0 To 4) As Double
 Global dblCurrentLiabilities(0 To 4) As Double
-Global dblLongTermDebt(0 To 4) As Double
+Global dblTotalDebt(0 To 4) As Double
 Global dblEquity(0 To 4) As Double
-Global iYear(0 To 4) As Integer
+Global dblLiabilities(0 To 4) As Double
 
 '===============================================================
 ' Procedure:    CreateStatementBalanceSheet
@@ -111,56 +112,102 @@ End Sub
 '
 ' Author:       Janice Laset Parkerson
 '
-' Notes:        Code generated using recorded macro
+' Notes:        using html DOM screen scraping
+'
+'               Google Financial statement page source:
+'               <div id="balannualdiv" class="id-balannualdiv" style="display:none">            --> parent element
+'                   <div id="balannualdiv_viz" class="id-balannualdiv_viz viz_charts"></div>    --> child(0)
+'                   <table id=fs-table class="gf-table rgt">                                    --> child(1)/parent
+'                       <thead>                                                                 --> child(0)
+'                           <tr>                                                                --> children
+'                           :
+'                       <tbody>                                                                 --> child(1)/parent
+'                       <!-- 1 row for each account item -->
+'                           <tr>                                                                --> children
+'                           <tr>
+'                           :
 '
 ' Parameters:   N/A
 '
 ' Returns:      N/A
 '
-' Rev History:   09Sept2014 by Janice Laset Parkerson
+' Rev History:  09Sept2014 by Janice Laset Parkerson
 '               - Initial Version
+'
+'               07Oct2014 by Janice Laset Parkerson
+'               - msn money changed financial data format
+'               - no longer able to read via Excel Data Web Query
+'               - read financials from Google Finance by screen scraping
 '===============================================================
 Sub GetAnnualDataBalanceSheet()
 
-    On Error GoTo ErrorHandler
+    Dim elBalSheetStatement As IHTMLElement
+    Dim elColBalSheetStatement As IHTMLElementCollection
     
-    With ActiveSheet.QueryTables.Add(Connection:= _
-        "URL;http://investing.money.msn.com/investments/stock-balance-sheet/?symbol=us%3A" & strTickerSym & "&stmtView=Ann" _
-        , Destination:=Range("$A$1"))
-        .Name = "?symbol=us%3ASLP&stmtView=Ann"
-        .FieldNames = True
-        .RowNumbers = False
-        .FillAdjacentFormulas = False
-        .PreserveFormatting = True
-        .RefreshOnFileOpen = False
-        .BackgroundQuery = True
-        .RefreshStyle = xlInsertDeleteCells
-        .SavePassword = False
-        .SaveData = True
-        .AdjustColumnWidth = True
-        .RefreshPeriod = 0
-        .WebSelectionType = xlSpecifiedTables
-        .WebFormatting = xlWebFormattingNone
-        .WebTables = "2"
-        .WebPreFormattedTextToColumns = True
-        .WebConsecutiveDelimitersAsOne = True
-        .WebSingleBlockTextImport = False
-        .WebDisableDateRecognition = False
-        .WebDisableRedirections = False
-        .Refresh BackgroundQuery:=False
-    End With
-    
-    Exit Sub
-    
-ErrorHandler:
-    'if unable to open web page
-    If Err.Number = 1004 Then
-        MsgBox "Unable to obtain stock information." & _
-        vbNewLine & "  - Please verify ticker symbol is correct." & _
-        vbNewLine & "  - Please check internet connection.", vbExclamation
+    Dim elBalSheetTable As IHTMLElement
+    Dim elColBalSheetTable As IHTMLElementCollection
         
-        End
-    End If
+    Dim elBalSheetDate As IHTMLElement
+    Dim elColBalSheetDate As IHTMLElementCollection
+    
+    Dim elAccountItemData As IHTMLElement
+    Dim elColAccountItemData As IHTMLElementCollection
+    
+    Dim elData As IHTMLElement
+    Dim elColData As IHTMLElementCollection
+
+    Dim i As Integer
+    Dim j As Integer
+    
+    On Error Resume Next
+    
+    'find annual balance sheet statemement <div id="balannualdiv">
+    Set elBalSheetStatement = htmlFinancialStatement.getElementById("balannualdiv")
+    'get child elements of elBalSheetStatement
+    Set elColBalSheetStatement = elBalSheetStatement.Children
+    
+    'child element(1) of elBalSheetStatement is data table <table id=fs-table>
+    Set elBalSheetTable = elColBalSheetStatement(1)
+    'get child elements of elBalSheetTable
+    Set elColBalSheetTable = elBalSheetTable.Children
+    
+    'get date information
+    'child element(0) of elBalSheetTable is head of data table <thead> (years)
+    Set elBalSheetDate = elColBalSheetTable(0)
+    'get child element of elBalSheetDate
+    Set elColBalSheetDate = elBalSheetDate.Children
+    
+    'child element(0) of elBalSheetDate is date information
+    Set elColData = elColBalSheetDate(0).Children
+    For i = 1 To 4
+        ActiveSheet.Range("A1").Offset(0, i).Value = elColData(i).innerText
+        
+        If Err = ERROR_CODE_OBJ_VAR_NOT_SET Then
+            ActiveSheet.Range("A1").Offset(0, i).Value = Null
+        End If
+    Next i
+    
+    'get balance sheet information
+    'child element(1) of elBalSheetTable is body of data table <tbody>
+    Set elAccountItemData = elColBalSheetTable(1)
+    'get child elements of elAccountItemData (balance sheet items)
+    Set elColAccountItemData = elAccountItemData.Children
+    
+    j = 0
+    'get balance sheet items
+    For Each elData In elColAccountItemData
+        'get child elements for each item (data per year)
+        Set elColData = elData.Children
+        
+        'child (0) is row information
+        ActiveSheet.Range("A2").Offset(j, 0).Value = elColData(0).innerText
+        
+        'children (1 to 4) are row data
+        For i = 1 To 4
+            ActiveSheet.Range("A2").Offset(j, i).Value = elColData(i).innerText
+        Next i
+        j = j + 1
+    Next elData
     
 End Sub
 
@@ -191,40 +238,17 @@ Sub FormatStatementBalanceSheet()
 
     Sheets("Balance Sheet - " & strTickerSym).Activate
     
-    GetYears
     GetReceivables
     GetInventory
     GetCurrentAssets
+    GetTotalAssets
     GetCurrentLiabilities
-    GetLongTermDebt
+    GetTotalDebt
+    GetLiabilities
     GetEquity
     
-End Sub
-
-'===============================================================
-' Procedure:    GetYears
-'
-' Description:  Get year values for financial report
-'
-' Author:       Janice Laset Parkerson
-'
-' Notes:        N/A
-'
-' Parameters:   N/A
-'
-' Returns:      N/A
-'
-' Rev History:   11Sept2014 by Janice Laset Parkerson
-'               - Initial Version
-'===============================================================
-Sub GetYears()
-
-    iYear(0) = ActiveSheet.Range("B1").value
-    iYear(1) = ActiveSheet.Range("C1").value
-    iYear(2) = ActiveSheet.Range("D1").value
-    iYear(3) = ActiveSheet.Range("E1").value
-    iYear(4) = ActiveSheet.Range("F1").value
-
+    Columns("A:E").EntireColumn.AutoFit
+    
 End Sub
 
 '===============================================================
@@ -247,11 +271,12 @@ End Sub
 Sub GetReceivables()
 
     Dim Receivables As String
+    Dim i As Integer
     
     On Error GoTo ErrorHandler
     
     'account item term to search for in balance sheet
-    Receivables = "Receivables"
+    Receivables = "Total Receivables, Net "
     
     'find receivables account item
     Columns("A:A").Select
@@ -259,11 +284,9 @@ Sub GetReceivables()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblReceivables(0) = Selection.Offset(0, 1).value
-    dblReceivables(1) = Selection.Offset(0, 2).value
-    dblReceivables(2) = Selection.Offset(0, 3).value
-    dblReceivables(3) = Selection.Offset(0, 4).value
-    dblReceivables(4) = Selection.Offset(0, 5).value
+    For i = 0 To 3
+        dblReceivables(i) = Selection.Offset(0, i + 1).Value
+    Next i
         
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
@@ -273,11 +296,9 @@ Sub GetReceivables()
 ErrorHandler:
     MsgBox "No Receivables information."
    
-    dblReceivables(0) = 0
-    dblReceivables(1) = 0
-    dblReceivables(2) = 0
-    dblReceivables(3) = 0
-    dblReceivables(4) = 0
+    For i = 0 To 3
+        dblReceivables(i) = 0
+    Next i
 
 End Sub
 
@@ -301,11 +322,12 @@ End Sub
 Sub GetInventory()
 
     Dim Inventory As String
+    Dim i As Integer
     
     On Error GoTo ErrorHandler
     
     'account item term to search for in balance sheet
-    Inventory = "Inventories"
+    Inventory = "Total Inventory "
     
     'find inventory account item
     Columns("A:A").Select
@@ -313,11 +335,9 @@ Sub GetInventory()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblInventory(0) = Selection.Offset(0, 1).value
-    dblInventory(1) = Selection.Offset(0, 2).value
-    dblInventory(2) = Selection.Offset(0, 3).value
-    dblInventory(3) = Selection.Offset(0, 4).value
-    dblInventory(4) = Selection.Offset(0, 5).value
+    For i = 0 To 3
+        dblInventory(i) = Selection.Offset(0, i + 1).Value
+    Next i
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
@@ -327,11 +347,9 @@ Sub GetInventory()
 ErrorHandler:
    MsgBox "No Inventory information."
    
-   dblInventory(0) = 0
-   dblInventory(1) = 0
-   dblInventory(2) = 0
-   dblInventory(3) = 0
-   dblInventory(4) = 0
+    For i = 0 To 3
+        dblInventory(i) = 0
+    Next i
    
 End Sub
 
@@ -355,11 +373,12 @@ End Sub
 Sub GetCurrentAssets()
 
     Dim CurrentAssets As String
+    Dim i As Integer
     
     On Error GoTo ErrorHandler
     
     'account item term to search for in balance sheet
-    CurrentAssets = "Total Current Assets"
+    CurrentAssets = "Total Current Assets "
         
     'find current assets account item
     Columns("A:A").Select
@@ -367,11 +386,9 @@ Sub GetCurrentAssets()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblCurrentAssets(0) = Selection.Offset(0, 1).value
-    dblCurrentAssets(1) = Selection.Offset(0, 2).value
-    dblCurrentAssets(2) = Selection.Offset(0, 3).value
-    dblCurrentAssets(3) = Selection.Offset(0, 4).value
-    dblCurrentAssets(4) = Selection.Offset(0, 5).value
+    For i = 0 To 3
+        dblCurrentAssets(i) = Selection.Offset(0, i + 1).Value
+    Next i
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
@@ -381,11 +398,60 @@ Sub GetCurrentAssets()
 ErrorHandler:
     MsgBox "No Current Assets information."
     
-    dblCurrentAssets(0) = 0
-    dblCurrentAssets(0) = 0
-    dblCurrentAssets(0) = 0
-    dblCurrentAssets(0) = 0
-    dblCurrentAssets(0) = 0
+    For i = 0 To 3
+        dblCurrentAssets(i) = 0
+    Next i
+
+End Sub
+
+'===============================================================
+' Procedure:    GetTotalAssets
+'
+' Description:  Find total assets information in balance sheet
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   11Oct2014 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub GetTotalAssets()
+
+    Dim strTotalAssets As String
+    Dim i As Integer
+    
+    On Error GoTo ErrorHandler
+    
+    'account item term to search for in balance sheet
+    strTotalAssets = "Total Assets "
+        
+    'find current assets account item
+    Columns("A:A").Select
+    Selection.Find(What:=strTotalAssets, After:=ActiveCell, LookIn:=xlFormulas, _
+        LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
+        MatchCase:=False, SearchFormat:=False).Select
+        
+    For i = 0 To 3
+        dblAssets(i) = Selection.Offset(0, i + 1).Value
+    Next i
+
+    Rows(ActiveCell.Row).Select
+    Selection.Font.ColorIndex = FONT_COLOR_BLUE
+    
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "No Total Assets information."
+    
+    For i = 0 To 3
+        dblAssets(i) = 0
+    Next i
 
 End Sub
 
@@ -409,11 +475,12 @@ End Sub
 Sub GetCurrentLiabilities()
 
     Dim CurrentLiabilities As String
+    Dim i As Integer
     
     On Error GoTo ErrorHandler
     
     'account item term to search for in balance sheet
-    CurrentLiabilities = "Total Current Liabilities"
+    CurrentLiabilities = "Total Current Liabilities "
         
     'find current liabilities account item
     Columns("A:A").Select
@@ -421,11 +488,9 @@ Sub GetCurrentLiabilities()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblCurrentLiabilities(0) = Selection.Offset(0, 1).value
-    dblCurrentLiabilities(1) = Selection.Offset(0, 2).value
-    dblCurrentLiabilities(2) = Selection.Offset(0, 3).value
-    dblCurrentLiabilities(3) = Selection.Offset(0, 4).value
-    dblCurrentLiabilities(4) = Selection.Offset(0, 5).value
+    For i = 0 To 3
+        dblCurrentLiabilities(i) = Selection.Offset(0, i + 1).Value
+    Next i
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = 5           'blue font
@@ -435,18 +500,16 @@ Sub GetCurrentLiabilities()
 ErrorHandler:
     MsgBox "No Current Liabilities information."
     
-    dblCurrentLiabilities(0) = 0
-    dblCurrentLiabilities(1) = 0
-    dblCurrentLiabilities(2) = 0
-    dblCurrentLiabilities(3) = 0
-    dblCurrentLiabilities(4) = 0
+    For i = 0 To 3
+        dblCurrentLiabilities(i) = 0
+    Next i
     
 End Sub
 
 '===============================================================
-' Procedure:    GetLongTermDebt
+' Procedure:    GetTotalDebt
 '
-' Description:  Find long term debt information in balance sheet
+' Description:  Find total debt information in balance sheet
 '               and get annual data
 '
 ' Author:       Janice Laset Parkerson
@@ -460,26 +523,25 @@ End Sub
 ' Rev History:   11Sept2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Sub GetLongTermDebt()
+Sub GetTotalDebt()
 
-    Dim LongTermDebt As String
+    Dim TotalDebt As String
+    Dim i As Integer
     
     On Error GoTo ErrorHandler
     
     'account item term to search for in balance sheet
-    LongTermDebt = "Lt Debt and Capital Lease Obligation"
+    TotalDebt = "Total Debt "
     
     'find long term debt account item
     Columns("A:A").Select
-    Selection.Find(What:=LongTermDebt, After:=ActiveCell, LookIn:=xlFormulas, _
+    Selection.Find(What:=TotalDebt, After:=ActiveCell, LookIn:=xlFormulas, _
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblLongTermDebt(0) = Selection.Offset(0, 1).value
-    dblLongTermDebt(1) = Selection.Offset(0, 2).value
-    dblLongTermDebt(2) = Selection.Offset(0, 3).value
-    dblLongTermDebt(3) = Selection.Offset(0, 4).value
-    dblLongTermDebt(4) = Selection.Offset(0, 5).value
+    For i = 0 To 3
+        dblTotalDebt(i) = Selection.Offset(0, i + 1).Value
+    Next i
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = 5           'blue font
@@ -487,13 +549,62 @@ Sub GetLongTermDebt()
     Exit Sub
     
 ErrorHandler:
-    MsgBox "No Long Term Debt information."
+    MsgBox "No Total Debt information."
     
-    dblLongTermDebt(0) = 0
-    dblLongTermDebt(1) = 0
-    dblLongTermDebt(2) = 0
-    dblLongTermDebt(3) = 0
-    dblLongTermDebt(4) = 0
+    For i = 0 To 3
+        dblTotalDebt(i) = 0
+    Next i
+    
+End Sub
+
+'===============================================================
+' Procedure:    GetLiabilities
+'
+' Description:  Find total liabilities information in balance sheet
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   09Oct2014 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub GetLiabilities()
+
+    Dim Liabilities As String
+    Dim i As Integer
+    
+    On Error GoTo ErrorHandler
+    
+    'account item term to search for in balance sheet
+    Liabilities = "Total Liabilities "
+    
+    'find long term debt account item
+    Columns("A:A").Select
+    Selection.Find(What:=Liabilities, After:=ActiveCell, LookIn:=xlFormulas, _
+        LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
+        MatchCase:=False, SearchFormat:=False).Select
+        
+    For i = 0 To 3
+        dblLiabilities(i) = Selection.Offset(0, i + 1).Value
+    Next i
+
+    Rows(ActiveCell.Row).Select
+    Selection.Font.ColorIndex = 5           'blue font
+    
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "No Liabilities information."
+    
+    For i = 0 To 3
+        dblLiabilities(i) = 0
+    Next i
     
 End Sub
 
@@ -517,11 +628,12 @@ End Sub
 Sub GetEquity()
 
     Dim Equity As String
+    Dim i As Integer
     
     On Error GoTo ErrorHandler
     
     'account item term to search for in balance sheet
-    Equity = "Total Equity"
+    Equity = "Total Equity "
        
     'find equity account item
     Columns("A:A").Select
@@ -529,11 +641,9 @@ Sub GetEquity()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblEquity(0) = Selection.Offset(0, 1).value
-    dblEquity(1) = Selection.Offset(0, 2).value
-    dblEquity(2) = Selection.Offset(0, 3).value
-    dblEquity(3) = Selection.Offset(0, 4).value
-    dblEquity(4) = Selection.Offset(0, 5).value
+    For i = 0 To 3
+        dblEquity(i) = Selection.Offset(0, i + 1).Value
+    Next i
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
@@ -543,10 +653,8 @@ Sub GetEquity()
 ErrorHandler:
     MsgBox "No Equity information."
     
-    dblEquity(0) = 0
-    dblEquity(1) = 0
-    dblEquity(2) = 0
-    dblEquity(3) = 0
-    dblEquity(4) = 0
+    For i = 0 To 3
+        dblEquity(i) = 0
+    Next i
     
 End Sub

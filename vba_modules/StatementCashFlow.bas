@@ -2,6 +2,7 @@ Attribute VB_Name = "StatementCashFlow"
 Option Explicit
 
 Global dblOpCashFlow(0 To 4) As Double
+Global dblCapEx(0 To 4) As Double
 Global dblFreeCashFlow(0 To 4) As Double
 
 '===============================================================
@@ -104,56 +105,102 @@ End Sub
 '
 ' Author:       Janice Laset Parkerson
 '
-' Notes:        Code generated using recorded macro
+' Notes:        using html DOM screen scraping
+'
+'               Google Financial statement page source:
+'               <div id="casannualdiv" class="id-casannualdiv" style="display:none">            --> parent element
+'                   <div id="casannualdiv_viz" class="id-casannualdiv_viz viz_charts"></div>    --> child(0)
+'                   <table id=fs-table class="gf-table rgt">                                    --> child(1)/parent
+'                       <thead>                                                                 --> child(0)
+'                           <tr>                                                                --> children
+'                           :
+'                       <tbody>                                                                 --> child(1)/parent
+'                       <!-- 1 row for each account item -->
+'                           <tr>                                                                --> children
+'                           <tr>
+'                           :
 '
 ' Parameters:   N/A
 '
 ' Returns:      N/A
 '
-' Rev History:   11Sept2014 by Janice Laset Parkerson
+' Rev History:  11Sept2014 by Janice Laset Parkerson
 '               - Initial Version
+'
+'               07Oct2014 by Janice Laset Parkerson
+'               - msn money changed financial data format
+'               - no longer able to read via Excel Data Web Query
+'               - read financials from Google Finance by screen scraping
 '===============================================================
 Sub GetAnnualDataCashFlow()
 
-    On Error GoTo ErrorHandler
+    Dim elCashFlowStatement As IHTMLElement
+    Dim elColCashFlowStatement As IHTMLElementCollection
     
-    With ActiveSheet.QueryTables.Add(Connection:= _
-        "URL;http://investing.money.msn.com/investments/stock-cash-flow/?symbol=" & strTickerSym & "", _
-        Destination:=Range("$A$1"))
-        .Name = "?symbol=slp"
-        .FieldNames = True
-        .RowNumbers = False
-        .FillAdjacentFormulas = False
-        .PreserveFormatting = True
-        .RefreshOnFileOpen = False
-        .BackgroundQuery = True
-        .RefreshStyle = xlInsertDeleteCells
-        .SavePassword = False
-        .SaveData = True
-        .AdjustColumnWidth = True
-        .RefreshPeriod = 0
-        .WebSelectionType = xlSpecifiedTables
-        .WebFormatting = xlWebFormattingNone
-        .WebTables = "2"
-        .WebPreFormattedTextToColumns = True
-        .WebConsecutiveDelimitersAsOne = True
-        .WebSingleBlockTextImport = False
-        .WebDisableDateRecognition = False
-        .WebDisableRedirections = False
-        .Refresh BackgroundQuery:=False
-    End With
-    
-    Exit Sub
-    
-ErrorHandler:
-    'if unable to open web page
-    If Err.Number = 1004 Then
-        MsgBox "Unable to obtain stock information." & _
-        vbNewLine & "  - Please verify ticker symbol is correct." & _
-        vbNewLine & "  - Please check internet connection.", vbExclamation
+    Dim elCashFlowTable As IHTMLElement
+    Dim elColCashFlowTable As IHTMLElementCollection
         
-        End
-    End If
+    Dim elCashFlowDate As IHTMLElement
+    Dim elColCashFlowDate As IHTMLElementCollection
+    
+    Dim elAccountItemData As IHTMLElement
+    Dim elColAccountItemData As IHTMLElementCollection
+    
+    Dim elData As IHTMLElement
+    Dim elColData As IHTMLElementCollection
+
+    Dim i As Integer
+    Dim j As Integer
+    
+    On Error Resume Next
+    
+    'find annual cash flow statemement <div id="casannualdiv">
+    Set elCashFlowStatement = htmlFinancialStatement.getElementById("casannualdiv")
+    'get child elements of elCashFlowStatement
+    Set elColCashFlowStatement = elCashFlowStatement.Children
+    
+    'child element(1) of elCashFlowStatement is data table <table id=fs-table>
+    Set elCashFlowTable = elColCashFlowStatement(1)
+    'get child elements of elCashFlowTable
+    Set elColCashFlowTable = elCashFlowTable.Children
+         
+    'get date information
+    'child element(0) of elCashFlowTable is head of data table <thead> (years)
+    Set elCashFlowDate = elColCashFlowTable(0)
+    'get child element of elCashFlowDate
+    Set elColCashFlowDate = elCashFlowDate.Children
+    
+    'child element(0) of elCashFlowDate is date information
+    Set elColData = elColCashFlowDate(0).Children
+    For i = 1 To 4
+        ActiveSheet.Range("A1").Offset(0, i).Value = elColData(i).innerText
+        
+        If Err = ERROR_CODE_OBJ_VAR_NOT_SET Then
+            ActiveSheet.Range("A1").Offset(0, i).Value = Null
+        End If
+    Next i
+    
+    'get cash flow information
+    'child element(1) of elCashFlowTable is body of data table <tbody>
+    Set elAccountItemData = elColCashFlowTable(1)
+    'get child elements of elAccountItemData (cash flow statement items)
+    Set elColAccountItemData = elAccountItemData.Children
+    
+    j = 0
+    'get cash flow statement items
+    For Each elData In elColAccountItemData
+        'get child elements (cash flow statement items)
+        Set elColData = elData.Children
+        
+        'child (0) is row information
+        ActiveSheet.Range("A2").Offset(j, 0).Value = elColData(0).innerText
+        
+        'children (1 to 4) are row data
+        For i = 1 To 4
+            ActiveSheet.Range("A2").Offset(j, i).Value = elColData(i).innerText
+        Next i
+        j = j + 1
+    Next elData
     
 End Sub
 
@@ -181,7 +228,10 @@ Sub FormatStatementCashFlow()
     Sheets("Cash Flow - " & strTickerSym).Activate
     
     GetOpCashFlow
+    GetCapEx
     GetFreeCashFlow
+    
+    Columns("A:E").EntireColumn.AutoFit
         
 End Sub
 
@@ -205,11 +255,12 @@ End Sub
 Sub GetOpCashFlow()
 
     Dim OpCashFlow As String
+    Dim i As Integer
     
     On Error GoTo ErrorHandler
     
     'account item term to search for in balance sheet
-    OpCashFlow = "Cash Flow from Operating Activities"
+    OpCashFlow = "Cash from Operating Activities "
     
     'find operating cash flow account item
     Columns("A:A").Select
@@ -217,11 +268,9 @@ Sub GetOpCashFlow()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblOpCashFlow(0) = Selection.Offset(0, 1).value
-    dblOpCashFlow(1) = Selection.Offset(0, 2).value
-    dblOpCashFlow(2) = Selection.Offset(0, 3).value
-    dblOpCashFlow(3) = Selection.Offset(0, 4).value
-    dblOpCashFlow(4) = Selection.Offset(0, 5).value
+    For i = 0 To 3
+        dblOpCashFlow(i) = Selection.Offset(0, i + 1).Value
+    Next i
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
@@ -231,18 +280,16 @@ Sub GetOpCashFlow()
 ErrorHandler:
    MsgBox "No Operating Cash Flow information."
    
-   dblOpCashFlow(0) = 0
-   dblOpCashFlow(1) = 0
-   dblOpCashFlow(2) = 0
-   dblOpCashFlow(3) = 0
-   dblOpCashFlow(4) = 0
+    For i = 0 To 3
+        dblOpCashFlow(i) = 0
+    Next i
     
 End Sub
 
 '===============================================================
-' Procedure:    GetFreeCashFlow
+' Procedure:    GetCapEx
 '
-' Description:  Find free cash flow information in cash flow
+' Description:  Find capital expenditures information in cash flow
 '               statement and get annual data
 '
 ' Author:       Janice Laset Parkerson
@@ -253,41 +300,81 @@ End Sub
 '
 ' Returns:      N/A
 '
-' Rev History:   11Sept2014 by Janice Laset Parkerson
+' Rev History:   07Oct2014 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Sub GetFreeCashFlow()
+Sub GetCapEx()
 
-    Dim FreeCashFlow As String
-
-    On Error GoTo ErrorHandler
-
-    'account item term to search for in balance sheet
-    FreeCashFlow = "Free Cash Flow"
+    Dim CapEx As String
+    Dim i As Integer
     
-    'find free cash flow account item
+    On Error GoTo ErrorHandler
+    
+    'account item term to search for in balance sheet
+    CapEx = "Capital Expenditures "
+    
+    'find operating cash flow account item
     Columns("A:A").Select
-    Selection.Find(What:=FreeCashFlow, After:=ActiveCell, LookIn:=xlFormulas, _
+    Selection.Find(What:=CapEx, After:=ActiveCell, LookIn:=xlFormulas, _
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblFreeCashFlow(0) = Selection.Offset(0, 1).value
-    dblFreeCashFlow(1) = Selection.Offset(0, 2).value
-    dblFreeCashFlow(2) = Selection.Offset(0, 3).value
-    dblFreeCashFlow(3) = Selection.Offset(0, 4).value
-    dblFreeCashFlow(4) = Selection.Offset(0, 5).value
-    
+    For i = 0 To 3
+        dblCapEx(i) = Selection.Offset(0, i + 1).Value
+    Next i
+
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
     
     Exit Sub
     
 ErrorHandler:
+   MsgBox "No CapitalExpenditures information."
+   
+    For i = 0 To 3
+        dblCapEx(i) = 0
+    Next i
+
+End Sub
+
+'===============================================================
+' Procedure:    GetFreeCashFlow
+'
+' Description:  Calculate free cash flow.
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:  11Sept2014 by Janice Laset Parkerson
+'               - Initial Version
+'
+'               07Oct2014 by Janice Laset Parkerson
+'               - calculate free cash flow (not available on google
+'                 finance page)
+'===============================================================
+Sub GetFreeCashFlow()
+
+    On Error GoTo ErrorHandler
+    Dim i As Integer
+        
+    'free cash flow = operating cash flow - capital expenditures
+    'cap ex recorded as negative value in statement -> add to op cash flow
+    For i = 0 To 3
+        dblFreeCashFlow(i) = dblOpCashFlow(i) + dblCapEx(i)
+    Next i
+    
+    Exit Sub
+    
+ErrorHandler:
    MsgBox "No Free Cash Flow information."
     
-   dblFreeCashFlow(0) = 0
-   dblFreeCashFlow(1) = 0
-   dblFreeCashFlow(2) = 0
-   dblFreeCashFlow(3) = 0
-   dblFreeCashFlow(4) = 0
+    For i = 0 To 3
+        dblFreeCashFlow(i) = 0
+    Next i
+
 End Sub

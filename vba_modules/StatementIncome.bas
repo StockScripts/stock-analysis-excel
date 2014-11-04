@@ -1,11 +1,18 @@
 Attribute VB_Name = "StatementIncome"
 Option Explicit
 
+' variables may be string '---' if no data
 Global dblRevenue(0 To 4) As Double
 Global dblSGA(0 To 4) As Double
+Global dblIncomeBeforeTax(0 To 4) As Double
+Global dblIncomeAfterTax(0 To 4) As Double
 Global dblNetIncome(0 To 4) As Double
-Global dblEPS(0 To 4) As Double
+Global dblOperatingExpense(0 To 4) As Double
+Global dblShares(0 To 4) As Double
+Global vEPS(0 To 4) As Variant
 Global dblDividendPerShare(0 To 4) As Double
+Global strYear(0 To 4) As String
+Global iYearsAvailableIncome As Integer
 
 '===============================================================
 ' Procedure:    CreateStatementIncome
@@ -100,60 +107,112 @@ End Sub
 '===============================================================
 ' Procedure:    GetAnnualDataIncome
 '
-' Description:  Get annual income statement from msnmoney.com
+' Description:  Get annual income statement from Google Finance
 '
 ' Author:       Janice Laset Parkerson
 '
-' Notes:        Code generated using recorded macro
+' Notes:        using html DOM screen scraping
+'
+'               Google Financial statement page source:
+'               <div id="incannualdiv" class="id-incannualdiv" style="display:none">            --> parent element
+'                   <div id="incannualdiv_viz" class="id-incannualdiv_viz viz_charts"></div>    --> child(0)
+'                   <table id=fs-table class="gf-table rgt">                                    --> child(1)/parent
+'                       <thead>                                                                 --> child(0)
+'                           <tr>                                                                --> children
+'                           :
+'                       <tbody>                                                                 --> child(1)/parent
+'                       <!-- 1 row for each account item -->
+'                           <tr>                                                                --> children
+'                           <tr>
+'                           :
 '
 ' Parameters:   N/A
 '
 ' Returns:      N/A
 '
-' Rev History:   11Sept2014 by Janice Laset Parkerson
+' Rev History:  11Sept2014 by Janice Laset Parkerson
 '               - Initial Version
+'
+'               07Oct2014 by Janice Laset Parkerson
+'               - msn money changed financial data format
+'               - no longer able to read via Excel Data Web Query
+'               - read financials from Google Finance by screen scraping
 '===============================================================
 Sub GetAnnualDataIncome()
 
-    On Error GoTo ErrorHandler
-
-    With ActiveSheet.QueryTables.Add(Connection:= _
-        "URL;http://investing.money.msn.com/investments/stock-income-statement/?symbol=" & strTickerSym & "" _
-        , Destination:=Range("$A$1"))
-        .Name = "?symbol=SLP"
-        .FieldNames = True
-        .RowNumbers = False
-        .FillAdjacentFormulas = False
-        .PreserveFormatting = True
-        .RefreshOnFileOpen = False
-        .BackgroundQuery = True
-        .RefreshStyle = xlInsertDeleteCells
-        .SavePassword = False
-        .SaveData = True
-        .AdjustColumnWidth = True
-        .RefreshPeriod = 0
-        .WebSelectionType = xlSpecifiedTables
-        .WebFormatting = xlWebFormattingNone
-        .WebTables = "2"
-        .WebPreFormattedTextToColumns = True
-        .WebConsecutiveDelimitersAsOne = True
-        .WebSingleBlockTextImport = False
-        .WebDisableDateRecognition = False
-        .WebDisableRedirections = False
-        .Refresh BackgroundQuery:=False
+    Dim elIncStatement As IHTMLElement
+    Dim elColIncStatement As IHTMLElementCollection
     
-    End With
-    Exit Sub
+    Dim elIncomeTable As IHTMLElement
+    Dim elColIncomeTable As IHTMLElementCollection
     
-ErrorHandler:
-    'if unable to open web page
-    If Err.Number = 1004 Then
-        MsgBox "Unable to obtain stock information." & _
-        vbNewLine & "  - Please verify ticker symbol is correct." & _
-        vbNewLine & "  - Please check internet connection.", vbExclamation
+    Dim elIncomeDate As IHTMLElement
+    Dim elColIncomeDate As IHTMLElementCollection
         
-        End
-    End If
+    Dim elAccountItemData As IHTMLElement
+    Dim elColAccountItemData As IHTMLElementCollection
+    
+    Dim elData As IHTMLElement
+    Dim elColData As IHTMLElementCollection
+
+    Dim i As Integer
+    Dim j As Integer
+    
+    On Error Resume Next
+    
+    'find annual income statemement <div id="incannualdiv">
+    Set elIncStatement = htmlFinancialStatement.getElementById("incannualdiv")
+    'get child elements of elIncStatement
+    Set elColIncStatement = elIncStatement.Children
+    
+    'child element(1) of elIncStatement is data table <table id=fs-table>
+    Set elIncomeTable = elColIncStatement(1)
+    'get child elements of elIncomeTable
+    Set elColIncomeTable = elIncomeTable.Children
+    
+    'get date information
+    'child element(0) of elIncomeTable is head of data table <thead> (years)
+    Set elIncomeDate = elColIncomeTable(0)
+    'get child element of elIncomeDate
+    Set elColIncomeDate = elIncomeDate.Children
+    
+    'child element(0) of elIncomeDate is date information
+    Set elColData = elColIncomeDate(0).Children
+    For i = 1 To YEARS_MAX
+        ActiveSheet.Range("A1").Offset(0, i).Value = elColData(i).innerText
+         
+        'if statement has less than 4 years of data
+        If Err = ERROR_CODE_OBJ_VAR_NOT_SET Then
+            ActiveSheet.Range("A1").Offset(0, i).Value = vbNullString
+            iYearsAvailableIncome = i - 1   'get max years of available income data
+            Err.Clear
+            Exit For
+        End If
+        
+        iYearsAvailableIncome = YEARS_MAX
+    Next i
+    
+    'get income statement information
+    'child element(1) of elIncomeTable is body of data table <tbody>
+    Set elAccountItemData = elColIncomeTable(1)
+    'get child elements of elAccountItemData (income statement items)
+    Set elColAccountItemData = elAccountItemData.Children
+    
+    j = 0
+    'get income statement items
+    For Each elData In elColAccountItemData
+        'get child elements for each item (data per year)
+        Set elColData = elData.Children
+        
+        'child(0) is row information
+        ActiveSheet.Range("A2").Offset(j, 0).Value = elColData(0).innerText
+        
+        'children (1 to 4) are row data
+        For i = 1 To iYearsAvailableIncome
+            ActiveSheet.Range("A2").Offset(j, i).Value = elColData(i).innerText
+        Next i
+        j = j + 1
+    Next elData
     
 End Sub
 
@@ -183,12 +242,51 @@ Sub FormatStatementIncome()
 
     Sheets("Income - " & strTickerSym).Activate
     
+    GetYears
     GetRevenue
     GetSGA
+    GetOperatingExpense
+    GetIncomeBeforeTax
+    GetIncomeAfterTax
     GetNetIncome
+    GetShares
     GetEPS
     GetDividendPerShare
     
+    Columns("A:E").EntireColumn.AutoFit
+    
+End Sub
+
+'===============================================================
+' Procedure:    GetYears
+'
+' Description:  Get year values for financial report
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   11Sept2014 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub GetYears()
+
+    Dim strReportDate(0 To 3) As String
+    Dim i As Integer
+    'year header text is "12 months ending YYYY-MM-DD "
+    'use Mid string function to extract date
+    'YYYY-MM-DD begins at index 1 (base 1)
+    Const iYearIndex As Integer = 17
+        
+    For i = 0 To (iYearsAvailableIncome - 1)
+        strReportDate(i) = Range("A1").Offset(0, i + 1).Value
+        strYear(i) = Mid(strReportDate(i), iYearIndex)
+    Next i
+
 End Sub
 
 '===============================================================
@@ -211,11 +309,10 @@ End Sub
 Sub GetRevenue()
 
     Dim Revenue As String
-    
-    On Error GoTo ErrorHandler
-    
+    Dim i As Integer
+       
     'account item term to search for in income statement
-    Revenue = "Total Revenue"
+    Revenue = "Total Revenue "
     
     'find revenue account item
     Columns("A:A").Select
@@ -223,26 +320,13 @@ Sub GetRevenue()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
 
-    dblRevenue(0) = Selection.Offset(0, 1).value
-    dblRevenue(1) = Selection.Offset(0, 2).value
-    dblRevenue(2) = Selection.Offset(0, 3).value
-    dblRevenue(3) = Selection.Offset(0, 4).value
-    dblRevenue(4) = Selection.Offset(0, 5).value
+    For i = 0 To (iYearsAvailableIncome - 1)
+        dblRevenue(i) = Selection.Offset(0, i + 1).Value
+    Next i
     
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
-    
-    Exit Sub
-    
-ErrorHandler:
-    MsgBox "No Revenue information."
-    
-    dblRevenue(0) = 0
-    dblRevenue(1) = 0
-    dblRevenue(2) = 0
-    dblRevenue(3) = 0
-    dblRevenue(4) = 0
-    
+        
 End Sub
 
 '===============================================================
@@ -265,11 +349,12 @@ End Sub
 Sub GetSGA()
 
     Dim SGA As String
+    Dim i As Integer
     
     On Error GoTo ErrorHandler
     
     'account item term to search for in income statement
-    SGA = "Selling"
+    SGA = "Selling/General/Admin. Expenses, Total "
        
     'find SGA account item
     Columns("A:A").Select
@@ -277,11 +362,9 @@ Sub GetSGA()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblSGA(0) = Selection.Offset(0, 1).value
-    dblSGA(1) = Selection.Offset(0, 2).value
-    dblSGA(2) = Selection.Offset(0, 3).value
-    dblSGA(3) = Selection.Offset(0, 4).value
-    dblSGA(4) = Selection.Offset(0, 5).value
+    For i = 0 To 3
+        dblSGA(i) = Selection.Offset(0, i + 1).Value
+    Next i
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
@@ -291,12 +374,146 @@ Sub GetSGA()
 ErrorHandler:
     MsgBox "No SGA information."
     
-    dblSGA(0) = 0
-    dblSGA(1) = 0
-    dblSGA(2) = 0
-    dblSGA(3) = 0
-    dblSGA(4) = 0
+    For i = 0 To 3
+        dblSGA(i) = 0
+    Next i
     
+End Sub
+
+'===============================================================
+' Procedure:    GetOperatingExpense
+'
+' Description:  Find operating expense information in income statement
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   27Oct2014 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub GetOperatingExpense()
+
+    Dim strOperatingExpense As String
+    Dim i As Integer
+    
+    On Error GoTo ErrorHandler
+    
+    'account item term to search for in income statement
+    strOperatingExpense = "Total Operating Expense "
+       
+    'find SGA account item
+    Columns("A:A").Select
+    Selection.Find(What:=strOperatingExpense, After:=ActiveCell, LookIn:=xlFormulas, _
+        LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
+        MatchCase:=False, SearchFormat:=False).Select
+        
+    For i = 0 To 3
+        dblOperatingExpense(i) = Selection.Offset(0, i + 1).Value
+    Next i
+
+    Rows(ActiveCell.Row).Select
+    Selection.Font.ColorIndex = FONT_COLOR_BLUE
+    
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "No Operating Expense information."
+    
+    For i = 0 To 3
+        dblOperatingExpense(i) = 0
+    Next i
+    
+End Sub
+
+'===============================================================
+' Procedure:    GetIncomeBeforeTax
+'
+' Description:  Find income before tax information in income statement
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   28Oct2014 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub GetIncomeBeforeTax()
+
+    Dim strIncomeBeforeTax As String
+    Dim i As Integer
+    
+    On Error Resume Next
+    
+    'account item term to search for in income statement
+    strIncomeBeforeTax = "Income Before Tax "
+         
+    'find net income account item
+    Range("A:A").Select
+    Selection.Find(What:=strIncomeBeforeTax, After:=ActiveCell, LookIn:=xlFormulas, _
+        LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
+        MatchCase:=False, SearchFormat:=False).Select
+        
+    For i = 0 To (iYearsAvailableIncome - 1)
+        dblIncomeBeforeTax(i) = Selection.Offset(0, i + 1).Value
+    Next i
+
+    Rows(ActiveCell.Row).Select
+    Selection.Font.ColorIndex = FONT_COLOR_BLUE
+
+
+End Sub
+
+'===============================================================
+' Procedure:    GetIncomeAfterTax
+'
+' Description:  Find income after tax information in income statement
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   28Oct2014 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub GetIncomeAfterTax()
+
+    Dim strIncomeAfterTax As String
+    Dim i As Integer
+    
+    On Error Resume Next
+    
+    'account item term to search for in income statement
+    strIncomeAfterTax = "Income After Tax "
+         
+    'find net income account item
+    Range("A:A").Select
+    Selection.Find(What:=strIncomeAfterTax, After:=ActiveCell, LookIn:=xlFormulas, _
+        LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
+        MatchCase:=False, SearchFormat:=False).Select
+        
+    For i = 0 To (iYearsAvailableIncome - 1)
+        dblIncomeAfterTax(i) = Selection.Offset(0, i + 1).Value
+    Next i
+
+    Rows(ActiveCell.Row).Select
+    Selection.Font.ColorIndex = FONT_COLOR_BLUE
+
 End Sub
 
 '===============================================================
@@ -319,11 +536,12 @@ End Sub
 Sub GetNetIncome()
 
     Dim NetIncome As String
+    Dim i As Integer
     
-    On Error GoTo ErrorHandler
+    On Error Resume Next
     
     'account item term to search for in income statement
-    NetIncome = "Net Income"
+    NetIncome = "Net Income "
          
     'find net income account item
     Range("A:A").Select
@@ -331,26 +549,55 @@ Sub GetNetIncome()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblNetIncome(0) = Selection.Offset(0, 1).value
-    dblNetIncome(1) = Selection.Offset(0, 2).value
-    dblNetIncome(2) = Selection.Offset(0, 3).value
-    dblNetIncome(3) = Selection.Offset(0, 4).value
-    dblNetIncome(4) = Selection.Offset(0, 5).value
+    For i = 0 To (iYearsAvailableIncome - 1)
+        dblNetIncome(i) = Selection.Offset(0, i + 1).Value
+    Next i
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
     
-    Exit Sub
+End Sub
+
+'===============================================================
+' Procedure:    GetShares
+'
+' Description:  Find shares information in income statement
+'               and get annual data
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:   12Sept2014 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub GetShares()
+
+    Dim strShares As String
+    Dim i As Integer
     
-ErrorHandler:
-    MsgBox "No Net Income information."
+    On Error Resume Next
     
-    dblNetIncome(0) = 0
-    dblNetIncome(1) = 0
-    dblNetIncome(2) = 0
-    dblNetIncome(3) = 0
-    dblNetIncome(4) = 0
-    
+    'account item term to search for in income statement
+    strShares = "Diluted Weighted Average Shares "
+         
+    'find net income account item
+    Range("A:A").Select
+    Selection.Find(What:=strShares, After:=ActiveCell, LookIn:=xlFormulas, _
+        LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
+        MatchCase:=False, SearchFormat:=False).Select
+        
+    For i = 0 To (iYearsAvailableIncome - 1)
+        dblShares(i) = Selection.Offset(0, i + 1).Value
+    Next i
+
+    Rows(ActiveCell.Row).Select
+    Selection.Font.ColorIndex = FONT_COLOR_BLUE
+
 End Sub
 
 '===============================================================
@@ -372,39 +619,29 @@ End Sub
 '===============================================================
 Sub GetEPS()
 
-    Dim EPS As String
-
-    'account item term to search for in income statement
-    EPS = "Diluted EPS"
+    Dim strEPS As String
+    Dim i As Integer
     
-    On Error GoTo ErrorHandler
+    'account item term to search for in income statement
+    strEPS = "Diluted Normalized EPS "
+    
+    On Error Resume Next
     
     'find EPS account item
     Columns("A:A").Select
-    Selection.Find(What:=EPS, After:=ActiveCell, LookIn:=xlFormulas, _
+    Selection.Find(What:=strEPS, After:=ActiveCell, LookIn:=xlFormulas, _
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblEPS(0) = Selection.Offset(0, 1).value
-    dblEPS(1) = Selection.Offset(0, 2).value
-    dblEPS(2) = Selection.Offset(0, 3).value
-    dblEPS(3) = Selection.Offset(0, 4).value
-    dblEPS(4) = Selection.Offset(0, 5).value
+    For i = 0 To (iYearsAvailableIncome - 1)
+        vEPS(i) = Selection.Offset(0, i + 1).Value
+    Next i
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
     
     Exit Sub
     
-ErrorHandler:
-    MsgBox "No EPS information."
-    
-    dblEPS(0) = 0
-    dblEPS(1) = 0
-    dblEPS(2) = 0
-    dblEPS(3) = 0
-    dblEPS(4) = 0
-
 End Sub
 
 '===============================================================
@@ -427,9 +664,10 @@ End Sub
 Sub GetDividendPerShare()
 
     Dim DividendPerShare As String
-
+    Dim i As Integer
+    
     'account item term to search for in income statement
-    DividendPerShare = "Dividend Per Share"
+    DividendPerShare = "Dividends per Share - Common Stock Primary Issue "
     
     On Error GoTo ErrorHandler
     
@@ -439,11 +677,9 @@ Sub GetDividendPerShare()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    dblDividendPerShare(0) = Selection.Offset(0, 1).value
-    dblDividendPerShare(1) = Selection.Offset(0, 2).value
-    dblDividendPerShare(2) = Selection.Offset(0, 3).value
-    dblDividendPerShare(3) = Selection.Offset(0, 4).value
-    dblDividendPerShare(4) = Selection.Offset(0, 5).value
+    For i = 0 To 3
+        dblDividendPerShare(i) = Selection.Offset(0, i + 1).Value
+    Next i
 
     Rows(ActiveCell.Row).Select
     Selection.Font.ColorIndex = FONT_COLOR_BLUE
@@ -453,10 +689,8 @@ Sub GetDividendPerShare()
 ErrorHandler:
     MsgBox "No Dividend Per Share information."
     
-    dblDividendPerShare(0) = 0
-    dblDividendPerShare(1) = 0
-    dblDividendPerShare(2) = 0
-    dblDividendPerShare(3) = 0
-    dblDividendPerShare(4) = 0
+    For i = 0 To 3
+        dblDividendPerShare(i) = 0
+    Next i
 
 End Sub

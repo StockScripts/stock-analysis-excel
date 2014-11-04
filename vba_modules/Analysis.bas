@@ -1,33 +1,138 @@
 Attribute VB_Name = "Analysis"
 Option Explicit
 
-'Public TickerSym As String
-'Public Const RedFont = 3
-'Public Const GreenFont = 10
-'Public Const OrangeFont = 46
+'Globals used throughout project
+Global strTickerSym As String
+Global Const FONT_COLOR_RED = 3
+Global Const FONT_COLOR_GREEN = 10
+Global Const FONT_COLOR_ORANGE = 46
+Global Const FONT_COLOR_BLUE = 5
 
-'Sub FindStocks()
-'    FindStocksForm.Show
-'End Sub
+Global Const ERROR_CODE_OVERFLOW = 6
+Global Const ERROR_CODE_TYPE_MISMATCH = 13
+Global Const ERROR_CODE_OBJ_VAR_NOT_SET = 91
 
+Global Const STR_NO_DATA = "---"    'indicates no data obtained from statement
 
-'Sub StockAnalysis()
-'    TickerSymForm.Show
-'End Sub
+Global Const CHECK_MARK = "P"
+Global Const X_MARK = "O"
 
-'Sub AnalyzeStock()
- '   BalanceSheetStatement
-  '  CashFlowStatement
-   ' IncomeStatement
-    'StocksChecklist
-'End Sub
+Global Const YEARS_MAX = 4  '4 years - used in 0 based for loops
 
-'Callback for Button1 onAction
+Public Enum Years
+    Year0
+    Year1
+    Year2
+    Year3
+    Year4
+End Enum
+
+Public Enum Result
+    PASS
+    FAIL
+End Enum
+
+'===============================================================
+' Procedure:    AnalyzeStock
+'
+' Description:  Call procedures to get data from MSN Money site.
+'               Create worksheet for Balance Sheet, Cash Flow
+'               Statement, and Income Statement.
+'               Extract required information and generate stocks
+'               checklist to be used to analyze company.
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+'Rev History:   09Sept14 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub AnalyzeStock()
+
+    ImportFinancialData
+    CreateStatementIncome
+    CreateStatementBalanceSheet
+    CreateStatementCashFlow
+    CreateKeyStatistics
+    
+    ie.Quit
+    
+    CreateChecklistStockAnalysis
+        
+End Sub
+
+'===============================================================
+' Procedure:    FindStocks(control As IRibbonControl)
+'
+' Description:  Callback for Find Stocks button
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+'Rev History:   09Sept14 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
 Sub FindStocks(control As IRibbonControl)
-    FindStocksForm.Show
+
+    FormFindStocks.Show
+    
 End Sub
 
-'Callback for Button2 onAction
+'===============================================================
+' Procedure:    FindStocks(control As IRibbonControl)
+'
+' Description:  Callback for Stock Analysis button
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+'Rev History:   09Sept14 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
 Sub StockAnalysis(control As IRibbonControl)
-    TickerSymForm.Show
+
+    FormTickerSym.Show
+    
 End Sub
+
+'===============================================================
+' Procedure:    CalculateYOYGrowth
+'
+' Description:  Calculate year over year growth between recent
+'               and past year
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   RecentYear, PastYear
+'
+' Returns:      Year over year growth between past and recent year
+'
+'Rev History:   09Sept14 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Function CalculateYOYGrowth(RecentYear, PastYear)
+    On Error Resume Next
+    If PastYear = 0 Then
+        CalculateYOYGrowth = 0
+    Else
+        CalculateYOYGrowth = (RecentYear - PastYear) / Abs(PastYear)
+    End If
+    
+End Function
