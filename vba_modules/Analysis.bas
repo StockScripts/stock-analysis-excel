@@ -8,24 +8,12 @@ Global Const FONT_COLOR_GREEN = 10
 Global Const FONT_COLOR_ORANGE = 46
 Global Const FONT_COLOR_BLUE = 5
 
-Global Const ERROR_CODE_OVERFLOW = 6
-Global Const ERROR_CODE_TYPE_MISMATCH = 13
-Global Const ERROR_CODE_OBJ_VAR_NOT_SET = 91
-
 Global Const STR_NO_DATA = "---"    'indicates no data obtained from statement
 
 Global Const CHECK_MARK = "P"
 Global Const X_MARK = "O"
 
 Global Const YEARS_MAX = 4  '4 years - used in 0 based for loops
-
-Public Enum Years
-    Year0
-    Year1
-    Year2
-    Year3
-    Year4
-End Enum
 
 Public Enum Result
     PASS

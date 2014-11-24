@@ -182,7 +182,7 @@ Sub GetAnnualDataIncome()
         ActiveSheet.Range("A1").Offset(0, i).Value = elColData(i).innerText
          
         'if statement has less than 4 years of data
-        If Err = ERROR_CODE_OBJ_VAR_NOT_SET Then
+        If Err Then
             ActiveSheet.Range("A1").Offset(0, i).Value = vbNullString
             iYearsAvailableIncome = i - 1   'get max years of available income data
             Err.Clear

@@ -214,71 +214,66 @@ Sub AssignCellItemsStockAnalysis()
     Range("A25:B25").Name = "LineListItemRedFlags"
     Range("A25:G25").Name = "LineListItemRedFlagsRow"
     
-    Range("B26").Name = "NetIncomeToOpCash"
-    Range("26:26").Name = "NetIncomeToOpCashRow"
-    Range("B27").Name = "NetIncomeToOpCashYOYGrowth"
-    Range("27:27").Name = "NetIncomeToOpCashYOYRow"
+    Range("B26").Name = "Receivables"
+    Range("26:26").Name = "ReceivablesRow"
+    Range("B27").Name = "ReceivablesYOYGrowth"
+    Range("27:27").Name = "ReceivablesYOYRow"
     
-    Range("B28").Name = "Receivables"
-    Range("28:28").Name = "ReceivablesRow"
-    Range("B29").Name = "ReceivablesYOYGrowth"
-    Range("29:29").Name = "ReceivablesYOYRow"
+    Range("B28").Name = "Inventory"
+    Range("28:28").Name = "InventoryRow"
+    Range("B29").Name = "InventoryYOYGrowth"
+    Range("29:29").Name = "InventoryYOYRow"
     
-    Range("B30").Name = "Inventory"
-    Range("30:30").Name = "InventoryRow"
-    Range("B31").Name = "InventoryYOYGrowth"
-    Range("31:31").Name = "InventoryYOYRow"
+    Range("B30").Name = "SGA"
+    Range("30:30").Name = "SGARow"
+    Range("B31").Name = "SGAYOYGrowth"
+    Range("31:31").Name = "SGAYOYRow"
     
-    Range("B32").Name = "SGA"
-    Range("32:32").Name = "SGARow"
-    Range("B33").Name = "SGAYOYGrowth"
-    Range("33:33").Name = "SGAYOYRow"
+    Range("B32").Name = "Dividend"
+    Range("32:32").Name = "DividendRow"
+    Range("B33").Name = "DividendYOYGrowth"
+    Range("33:33").Name = "DividendYOYRow"
     
-    Range("B34").Name = "Dividend"
-    Range("34:34").Name = "DividendRow"
-    Range("B35").Name = "DividendYOYGrowth"
-    Range("35:35").Name = "DividendYOYRow"
-    
-    Range("G26:G35").Name = "RedFlagsCheck"
+    Range("G26:G33").Name = "RedFlagsCheck"
     
     'price checklist item
-    Range("A36").Name = "ListItemPrice"
-    Range("A36:B36").Name = "LineListItemPrice"
-    Range("A36:G36").Name = "LineListItemPriceRow"
+    Range("A34").Name = "ListItemPrice"
+    Range("A34:B34").Name = "LineListItemPrice"
+    Range("A34:G34").Name = "LineListItemPriceRow"
     
-    Range("B37:B39").Name = "PriceCol1"
-    Range("C37:C39").Name = "PriceCol2"
-    Range("E37:E39").Name = "PriceCol3"
-    Range("F37:F39").Name = "PriceCol4"
+    Range("B35:B37").Name = "PriceCol1"
+    Range("C35:C37").Name = "PriceCol2"
+    Range("E35:E37").Name = "PriceCol3"
+    Range("F35:F37").Name = "PriceCol4"
     
-    Range("B37").Name = "Price"
-    Range("B38").Name = "TargetPrice"
-    Range("B39").Name = "PriceGrowth"
+    Range("B35").Name = "Price"
+    Range("B36").Name = "TargetPrice"
+    Range("B37").Name = "PriceGrowth"
     
-    Range("E37").Name = "HighTarget"
-    Range("E38").Name = "LowTarget"
-    Range("E39").Name = "Brokers"
+    Range("E35").Name = "HighTarget"
+    Range("E36").Name = "LowTarget"
+    Range("E37").Name = "Brokers"
     
-    Range("G37:G39").Name = "PriceCheck"
+    Range("G35:G37").Name = "PriceCheck"
     
     'current statistics
-    Range("A40:G40").Name = "CurrentStatsRow"
-    Range("B41:B44").Name = "CurrentStatsCol1"
-    Range("C41:C45").Name = "CurrentStatsCol2"
-    Range("E41:E45").Name = "CurrentStatsCol3"
-    Range("F41:F45").Name = "CurrentStatsCol4"
+    Range("A38:G38").Name = "CurrentStatsRow"
+    Range("B39:B43").Name = "CurrentStatsCol1"
+    Range("C39:C43").Name = "CurrentStatsCol2"
+    Range("E39:E43").Name = "CurrentStatsCol3"
+    Range("F39:F43").Name = "CurrentStatsCol4"
     
-    Range("B41").Name = "MarketCap"
-    Range("B42").Name = "PETTM"
-    Range("B43").Name = "EPSTTM"
-    Range("B44").Name = "DivYield"
-    Range("B45").Name = "RevenueTTM"
+    Range("B39").Name = "MarketCap"
+    Range("B40").Name = "PETTM"
+    Range("B41").Name = "EPSTTM"
+    Range("B42").Name = "DivYield"
+    Range("B43").Name = "RevenueTTM"
     
-    Range("E41").Name = "ProfitMarginTTM"
-    Range("E42").Name = "ROETTM"
-    Range("E43").Name = "DebtToEquityMRQ"
-    Range("E44").Name = "CurrentRatioMRQ"
-    Range("E45").Name = "FreeCashFlowTTM"
+    Range("E39").Name = "ProfitMarginTTM"
+    Range("E40").Name = "ROETTM"
+    Range("E41").Name = "DebtToEquityMRQ"
+    Range("E42").Name = "CurrentRatioMRQ"
+    Range("E43").Name = "FreeCashFlowTTM"
     
 End Sub
 
@@ -750,22 +745,6 @@ Sub FormatCheckListRedFlags()
         .Borders(xlEdgeTop).LineStyle = xlContinuous
         .Borders(xlEdgeRight).LineStyle = xlContinuous
         .Borders(xlEdgeBottom).LineStyle = xlContinuous
-    End With
-    
-    
-    'net income to operating cash flow
-    Range("NetIncometoOpCash").HorizontalAlignment = xlLeft
-    Range("NetIncometoOpCashRow").NumberFormat = "0.0%"
-    
-    With Range("NetIncometoOpCashYOYGrowth")
-        .HorizontalAlignment = xlRight
-        .Offset(0, iYearsAvailableIncome).HorizontalAlignment = xlCenter
-        .Offset(0, iYearsAvailableIncome) = STR_NO_DATA
-    End With
-    
-    With Range("NetIncometoOpCashYOYRow")
-        .Font.Italic = True
-        .NumberFormat = "0.0%"
     End With
     
     'receivables

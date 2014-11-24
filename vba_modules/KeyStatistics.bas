@@ -253,7 +253,7 @@ Sub GetHighTarget()
         LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
         MatchCase:=False, SearchFormat:=False).Select
         
-    If Err = ERROR_CODE_OBJ_VAR_NOT_SET Then
+    If Err Then
         vHighTarget = "N/A"
     Else
         vHighTarget = Selection.Offset(0, 1).Value

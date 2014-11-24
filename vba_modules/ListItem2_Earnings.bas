@@ -91,6 +91,8 @@ Sub DisplayEarningsInfo()
     
     Dim i As Integer
     
+    On Error Resume Next
+    
     Range("ListItemEarnings") = "Are earnings increasing?"
     Range("Earnings") = "Diluted EPS"
     
@@ -113,9 +115,21 @@ Sub DisplayEarningsInfo()
     
     For i = 0 To (iYearsAvailableIncome - 1)
         dblExpenseToSales(i) = dblOperatingExpense(i) / dblRevenue(i)
+        
+        If Err Then
+            dblExpenseToSales(i) = 0
+            Err.Clear
+        End If
+        
         strExpenseToSales(i) = Format(dblExpenseToSales(i), "0.00")
         
         dblTaxRate(i) = 1 - (dblIncomeAfterTax(i) / dblIncomeBeforeTax(i))
+        
+        If Err Then
+            dblTaxRate(i) = 0
+            Err.Clear
+        End If
+        
         strTaxRate(i) = Format(dblTaxRate(i), "0.0%")
     Next i
     
@@ -138,13 +152,14 @@ Sub DisplayEarningsInfo()
         .AddComment
         .Comment.Visible = False
         .Comment.Text Text:="EPS = Net Income / Shares Outstanding" & Chr(10) & _
+                "" & Chr(10) & _
                 "YOY Net Income              " & dblNetIncome(0) & "     " & dblNetIncome(1) & "     " & dblNetIncome(2) & "     " & dblNetIncome(3) & Chr(10) & _
                 "YOY Net Income Growth   " & strNetIncomeYOYGrowth(0) & "     " & strNetIncomeYOYGrowth(1) & "     " & strNetIncomeYOYGrowth(2) & Chr(10) & _
                 "" & Chr(10) & _
                 "YOY Expense/Sales              " & strExpenseToSales(0) & "     " & strExpenseToSales(1) & "     " & strExpenseToSales(2) & "     " & strExpenseToSales(3) & Chr(10) & _
                 "YOY Expense/Sales Growth   " & strExpenseToSalesYOYGrowth(0) & "     " & strExpenseToSalesYOYGrowth(1) & "     " & strExpenseToSalesYOYGrowth(2) & Chr(10) & _
                 "" & Chr(10) & _
-                "YOY Tax Rate             " & strTaxRate(0) & "     " & strTaxRate(1) & "     " & strTaxRate(2) & "     " & strTaxRate(3) & Chr(10) & _
+                "YOY Tax Rate              " & strTaxRate(0) & "     " & strTaxRate(1) & "     " & strTaxRate(2) & "     " & strTaxRate(3) & Chr(10) & _
                 "YOY Tax Rate Growth   " & strTaxRateYOYGrowth(0) & "     " & strTaxRateYOYGrowth(1) & "     " & strTaxRateYOYGrowth(2) & Chr(10) & _
                 "" & Chr(10) & _
                 "YOY Shares Outstanding              " & dblShares(0) & "     " & dblShares(1) & "     " & dblShares(2) & "     " & dblShares(3) & Chr(10) & _

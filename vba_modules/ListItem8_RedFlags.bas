@@ -31,7 +31,6 @@ Sub EvaluateRedFlags()
     
     DisplayRedFlagsInfo
     
-    EvaluateNetIncomeToOpCash
     EvaluateReceivablesToSales
     EvaluateInventoryToSales
     EvaluateSGAToSales
@@ -60,25 +59,32 @@ End Sub
 '               - Initial Version
 '===============================================================
 Sub DisplayRedFlagsInfo()
-
-    Dim dblNetIncomeYOYGrowth(0 To 3) As Double
-    Dim strNetIncomeYOYGrowth(0 To 3) As String
-    
-    Dim dblOpCashFlowYOYGrowth(0 To 3) As Double
-    Dim strOpCashFlowYOYGrowth(0 To 3) As String
-    
+   
     Dim dblReceivablesYOYGrowth(0 To 3) As Double
     Dim strReceivablesYOYGrowth(0 To 3) As String
+    
+    Dim dblInventoryYOYGrowth(0 To 3) As Double
+    Dim strInventoryYOYGrowth(0 To 3) As String
+    
+    Dim dblSGAYOYGrowth(0 To 3) As Double
+    Dim strSGAYOYGrowth(0 To 3) As String
     
     Dim dblRevenueYOYGrowth(0 To 3) As Double
     Dim strRevenueYOYGrowth(0 To 3) As String
     
     Range("ListItemRedFlags") = "Are there red flags?"
-    Range("NetIncomeToOpCash") = "Income/Op Cash"
+    
     Range("Receivables") = "Receivables/Sales"
+    Range("ReceivablesYOYGrowth") = "YOY Growth (%)"
+    
     Range("Inventory") = "Inventory/Sales"
+    Range("InventoryYOYGrowth") = "YOY Growth (%)"
+    
     Range("SGA") = "SGA/Sales"
+    Range("SGAYOYGrowth") = "YOY Growth (%)"
+    
     Range("Dividend") = "Dividend/Share"
+    Range("DividendYOYGrowth") = "YOY Growth (%)"
 
     'red flags info
     With Range("ListItemRedFlags")
@@ -90,7 +96,6 @@ Sub DisplayRedFlagsInfo()
                 "Why is it important:" & Chr(10) & _
                 "   A red flag indicates potential problems within a company." & Chr(10) & _
                 "What to look for:" & Chr(10) & _
-                "   Net income should not be increasing while cash flow from operations is decreasing." & Chr(10) & _
                 "   Accounts receivable should not exceed 20% of annual sales." & Chr(10) & _
                 "   Inventory should not exceed 25% of cost of goods sold." & Chr(10) & _
                 "   Inventory, accounts receivables, and SGA should not grow faster than sales." & Chr(10) & _
@@ -98,41 +103,53 @@ Sub DisplayRedFlagsInfo()
                 "What to watch for:" & Chr(10) & _
                 "   Inventory, sales, and receivables should move in tandem because customers" & Chr(10) & _
                 "   do not pay up front if they can avoid it." & Chr(10) & _
-                "   Inflating the inventory may increase earnings. Inventory fraud is a way to produce instant earnings."
+                "   Inflating the inventory may increase earnings. Inventory fraud is a way to produce instant earnings." & Chr(10) & _
+                "   Increasing SGA can be indicate operational problems along with deteriorating operating margins."
         .Comment.Shape.TextFrame.AutoSize = True
     End With
     
     'calculate YOY growth
     For i = 0 To (iYearsAvailableIncome - 2)
-        dblNetIncomeYOYGrowth(i) = CalculateYOYGrowth(dblNetIncome(i), dblNetIncome(i + 1))
-        strNetIncomeYOYGrowth(i) = Format(dblNetIncomeYOYGrowth(i), "0.0%")
-        
-        dblOpCashFlowYOYGrowth(i) = CalculateYOYGrowth(dblOpCashFlow(i), dblOpCashFlow(i + 1))
-        strOpCashFlowYOYGrowth(i) = Format(dblOpCashFlowYOYGrowth(i), "0.0%")
-        
         dblReceivablesYOYGrowth(i) = CalculateYOYGrowth(dblReceivables(i), dblReceivables(i + 1))
         strReceivablesYOYGrowth(i) = Format(dblReceivablesYOYGrowth(i), "0.0%")
+        
+        dblInventoryYOYGrowth(i) = CalculateYOYGrowth(dblInventory(i), dblInventory(i + 1))
+        strInventoryYOYGrowth(i) = Format(dblInventoryYOYGrowth(i), "0.0%")
+        
+        dblSGAYOYGrowth(i) = CalculateYOYGrowth(dblSGA(i), dblSGA(i + 1))
+        strSGAYOYGrowth(i) = Format(dblSGAYOYGrowth(i), "0.0%")
         
         dblRevenueYOYGrowth(i) = CalculateYOYGrowth(dblRevenue(i), dblRevenue(i + 1))
         strRevenueYOYGrowth(i) = Format(dblRevenueYOYGrowth(i), "0.0%")
     Next i
     
-    With Range("NetIncomeToOpCash")
-        .AddComment
-        .Comment.Visible = False
-        .Comment.Text Text:="YOY Net Income                " & dblNetIncome(0) & "     " & dblNetIncome(1) & "     " & dblNetIncome(2) & "     " & dblNetIncome(3) & Chr(10) & _
-                "YOY Net Income Growth     " & strNetIncomeYOYGrowth(0) & "     " & strNetIncomeYOYGrowth(1) & "     " & strNetIncomeYOYGrowth(2) & Chr(10) & _
-                "" & Chr(10) & _
-                "YOY Op Cash Flow              " & dblOpCashFlow(0) & "     " & dblOpCashFlow(1) & "     " & dblOpCashFlow(2) & "     " & dblOpCashFlow(3) & Chr(10) & _
-                "YOY Op Cash Flow Growth   " & strOpCashFlowYOYGrowth(0) & "     " & strOpCashFlowYOYGrowth(1) & "     " & strOpCashFlowYOYGrowth(2) & ""
-        .Comment.Shape.TextFrame.AutoSize = True
-    End With
-    
     With Range("Receivables")
         .AddComment
         .Comment.Visible = False
-        .Comment.Text Text:="YOY Receivables                " & dblReceivables(0) & "     " & dblReceivables(1) & "     " & dblReceivables(2) & "     " & dblReceivables(3) & Chr(10) & _
+        .Comment.Text Text:="YOY Receivables" & "                " & dblReceivables(0) & "       " & dblReceivables(1) & "       " & dblReceivables(2) & "       " & dblReceivables(3) & Chr(10) & _
                 "YOY Receivables Growth     " & strReceivablesYOYGrowth(0) & "     " & strReceivablesYOYGrowth(1) & "     " & strReceivablesYOYGrowth(2) & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Revenue              " & dblRevenue(0) & "     " & dblRevenue(1) & "     " & dblRevenue(2) & "     " & dblRevenue(3) & Chr(10) & _
+                "YOY Revenue Growth   " & strRevenueYOYGrowth(0) & "     " & strRevenueYOYGrowth(1) & "     " & strRevenueYOYGrowth(2) & ""
+        .Comment.Shape.TextFrame.AutoSize = True
+    End With
+    
+    With Range("Inventory")
+        .AddComment
+        .Comment.Visible = False
+        .Comment.Text Text:="YOY Inventory" & "                " & dblInventory(0) & "       " & dblInventory(1) & "       " & dblInventory(2) & "       " & dblInventory(3) & Chr(10) & _
+                "YOY Inventory Growth     " & strInventoryYOYGrowth(0) & "     " & strInventoryYOYGrowth(1) & "     " & strInventoryYOYGrowth(2) & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Revenue              " & dblRevenue(0) & "     " & dblRevenue(1) & "     " & dblRevenue(2) & "     " & dblRevenue(3) & Chr(10) & _
+                "YOY Revenue Growth   " & strRevenueYOYGrowth(0) & "     " & strRevenueYOYGrowth(1) & "     " & strRevenueYOYGrowth(2) & ""
+        .Comment.Shape.TextFrame.AutoSize = True
+    End With
+    
+    With Range("SGA")
+        .AddComment
+        .Comment.Visible = False
+        .Comment.Text Text:="YOY SGA" & "                " & dblSGA(0) & "       " & dblSGA(1) & "       " & dblSGA(2) & "       " & dblSGA(3) & Chr(10) & _
+                "YOY SGA Growth     " & strSGAYOYGrowth(0) & "     " & strSGAYOYGrowth(1) & "     " & strSGAYOYGrowth(2) & Chr(10) & _
                 "" & Chr(10) & _
                 "YOY Revenue              " & dblRevenue(0) & "     " & dblRevenue(1) & "     " & dblRevenue(2) & "     " & dblRevenue(3) & Chr(10) & _
                 "YOY Revenue Growth   " & strRevenueYOYGrowth(0) & "     " & strRevenueYOYGrowth(1) & "     " & strRevenueYOYGrowth(2) & ""
@@ -141,92 +158,19 @@ Sub DisplayRedFlagsInfo()
     
 End Sub
 
-'===============================================================
-' Procedure:    EvaluateNetIncomeToOpCash
-'
-' Description:  Display Net Income to Operating Cash flow information.
-'               Call procedure to display YOY growth information
-'
-'               catch divide by 0 errors
-'               ErrorNum serves as markers to indicate which
-'               year data generates the error
-'               -> set growth to 0 if error
-'
-' Author:       Janice Laset Parkerson
-'
-' Notes:        N/A
-'
-' Parameters:   N/A
-'
-' Returns:      N/A
-'
-' Rev History:  01Nov14 by Janice Laset Parkerson
-'               - Initial Version
-'===============================================================
-Sub EvaluateNetIncomeToOpCash()
-       
-'   populate Receivables/Sales information
-    dblNetIncomeToOpCash(0) = dblNetIncome(0) / dblOpCashFlow(0)
-    Range("NetIncometoOpcash").Offset(0, 1) = dblNetIncomeToOpCash(0)
-    
-    dblNetIncomeToOpCash(1) = dblNetIncome(1) / dblOpCashFlow(1)
-    Range("NetIncometoOpcash").Offset(0, 2) = dblNetIncomeToOpCash(1)
-    
-    dblNetIncomeToOpCash(2) = dblNetIncome(2) / dblOpCashFlow(2)
-    Range("NetIncometoOpcash").Offset(0, 3) = dblNetIncomeToOpCash(2)
-    
-    dblNetIncomeToOpCash(3) = dblNetIncome(3) / dblOpCashFlow(3)
-    Range("NetIncometoOpcash").Offset(0, 4) = dblNetIncomeToOpCash(3)
-
-    CalculateNetIncomeToOpCashYOYGrowth
-
-End Sub
-
-'===============================================================
-' Procedure:    CalculateNetIncomeToOpCashYOYGrowth
-'
-' Description:  Call procedure to calculate and display YOY
-'               growth for Net Income to operating cash flow data.
-'               Format cells.
-'
-' Author:       Janice Laset Parkerson
-'
-' Notes:        N/A
-'
-' Parameters:   N/A
-'
-' Returns:      N/A
-'
-' Rev History:  01Nov14 by Janice Laset Parkerson
-'               - Initial Version
-'===============================================================
-Sub CalculateNetIncomeToOpCashYOYGrowth()
-
-    Dim dblYOYGrowth(0 To 3) As Double
-
-    Range("NetIncomeToOpCashYOYGrowth") = "YOY Growth (%)"
-
-    'populate YOY growth information
-    '(0) is most recent year
-    dblYOYGrowth(0) = CalculateYOYGrowth(dblNetIncomeToOpCash(0), dblNetIncomeToOpCash(1))
-    dblYOYGrowth(1) = CalculateYOYGrowth(dblNetIncomeToOpCash(1), dblNetIncomeToOpCash(2))
-    dblYOYGrowth(2) = CalculateYOYGrowth(dblNetIncomeToOpCash(2), dblNetIncomeToOpCash(3))
-    
-    Call EvaluateRedFlagYOYGrowth(Range("NetIncomeToOpCashYOYGrowth"), dblYOYGrowth(0), dblYOYGrowth(1), dblYOYGrowth(2))
-    
-
-End Sub
 
 '===============================================================
 ' Procedure:    EvaluateReceivablesToSales
 '
 ' Description:  Display Receivables to Sales information.
+'               if recent year receivables/sales > RECEIVABLES_MAX -> fail
+'               else pass
+'
+'               if past years receivables/sales > RECEIVABLES_MAX -> warning
+'
 '               Call procedure to display YOY growth information
 '
-'               catch divide by 0 errors
-'               ErrorNum serves as markers to indicate which
-'               year data generates the error
-'               -> set growth to 0 if error
+'               catch errors and set value to STR_NO_DATA
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -241,48 +185,44 @@ End Sub
 '===============================================================
 Sub EvaluateReceivablesToSales()
 
-    Dim ErrorNum As Years   'used to catch errors for each year of data
+    Dim i As Integer
     
-    On Error GoTo ErrorHandler
+    On Error Resume Next
         
-'   populate Receivables/Sales information
-    ErrorNum = Year0
     dblReceivablesToSales(0) = dblReceivables(0) / dblRevenue(0)
-    Range("Receivables").Offset(0, 1) = dblReceivablesToSales(0)
-    
-    ErrorNum = Year1
-    dblReceivablesToSales(1) = dblReceivables(1) / dblRevenue(1)
-    Range("Receivables").Offset(0, 2) = dblReceivablesToSales(1)
-    
-    ErrorNum = Year2
-    dblReceivablesToSales(2) = dblReceivables(2) / dblRevenue(2)
-    Range("Receivables").Offset(0, 3) = dblReceivablesToSales(2)
-    
-    ErrorNum = Year3
-    dblReceivablesToSales(3) = dblReceivables(3) / dblRevenue(3)
-    Range("Receivables").Offset(0, 4) = dblReceivablesToSales(3)
+    Range("Receivables").Offset(0, 1).Select
+    If Err Then
+        Selection.HorizontalAlignment = xlCenter
+        Selection.Value = STR_NO_DATA
+        Err.Clear
+    Else
+        If dblReceivablesToSales(0) > RECEIVABLES_MAX Then
+            Selection.Font.ColorIndex = FONT_COLOR_RED
+            ResultRedFlags = FAIL
+        Else
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        End If
+        Selection.Value = dblReceivablesToSales(0)
+    End If
+        
+    'populate Receivables/Sales information
+    For i = 1 To (iYearsAvailableIncome - 1)
+        dblReceivablesToSales(i) = dblReceivables(i) / dblRevenue(i)
+        Range("Receivables").Offset(0, i + 1).Select
+        If Err Then
+            Selection.HorizontalAlignment = xlCenter
+            Selection.Value = STR_NO_DATA
+            Err.Clear
+        Else
+            If dblReceivablesToSales(i) > RECEIVABLES_MAX Then
+                Selection.Font.ColorIndex = FONT_COLOR_ORANGE
+            Else
+                Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            End If
+            Selection.Value = dblReceivablesToSales(i)
+        End If
+    Next i
 
-    CalculateReceivablesToSalesYOYGrowth
-    
-    Exit Sub
-    
-ErrorHandler:
-
-    Select Case ErrorNum
-        Case Year0
-            dblReceivablesToSales(0) = 0
-            Range("Receivables").Offset(0, 1) = dblReceivablesToSales(0)
-        Case Year1
-            dblReceivablesToSales(1) = 0
-            Range("Receivables").Offset(0, 2) = dblReceivablesToSales(1)
-        Case Year2
-            dblReceivablesToSales(2) = 0
-            Range("Receivables").Offset(0, 3) = dblReceivablesToSales(2)
-        Case Year3
-            dblReceivablesToSales(3) = 0
-            Range("Receivables").Offset(0, 4) = dblReceivablesToSales(3)
-   End Select
-   
     CalculateReceivablesToSalesYOYGrowth
 
 End Sub
@@ -308,15 +248,20 @@ Sub CalculateReceivablesToSalesYOYGrowth()
 
     Dim dblYOYGrowth(0 To 3) As Double
 
-    Range("ReceivablesYOYGrowth") = "YOY Growth (%)"
+    On Error Resume Next
 
     'populate YOY growth information
     '(0) is most recent year
-    dblYOYGrowth(0) = CalculateYOYGrowth(dblReceivablesToSales(0), dblReceivablesToSales(1))
-    dblYOYGrowth(1) = CalculateYOYGrowth(dblReceivablesToSales(1), dblReceivablesToSales(2))
-    dblYOYGrowth(2) = CalculateYOYGrowth(dblReceivablesToSales(2), dblReceivablesToSales(3))
-    
-    Call EvaluateRedFlagYOYGrowth(Range("ReceivablesYOYGrowth"), dblYOYGrowth(0), dblYOYGrowth(1), dblYOYGrowth(2))
+    For i = 0 To (iYearsAvailableIncome - 2)
+        dblYOYGrowth(i) = CalculateYOYGrowth(dblReceivablesToSales(i), dblReceivablesToSales(i + 1))
+        
+        If Err Then
+            dblYOYGrowth(i) = 0
+            Err.Clear
+        End If
+    Next i
+
+    Call EvaluateRedFlagYOYGrowth(Range("ReceivablesYOYGrowth"), dblYOYGrowth)
     
 End Sub
 
@@ -324,12 +269,14 @@ End Sub
 ' Procedure:    EvaluateInventoryToSales
 '
 ' Description:  Display Inventory to Sales information.
+'               if recent year inventory/sales > INVENTORY_MAX -> fail
+'               else pass
+'
+'               if past years inventory/sales > INVENTORY_MAX -> warning
+'
 '               Call procedure to display YOY growth information
 '
-'               catch divide by 0 errors
-'               ErrorNum serves as markers to indicate which
-'               year data generates the error
-'               -> set growth to 0 if error
+'               catch errors and set value to STR_NO_DATA
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -344,48 +291,44 @@ End Sub
 '===============================================================
 Sub EvaluateInventoryToSales()
 
-    Dim ErrorNum As Years   'used to catch errors for each year of data
+    Dim i As Integer
     
-    On Error GoTo ErrorHandler
+    On Error Resume Next
     
-'   populate ROE information
-    ErrorNum = Year0
     dblInventoryToSales(0) = dblInventory(0) / dblRevenue(0)
-    Range("Inventory").Offset(0, 1) = dblInventoryToSales(0)
-    
-    ErrorNum = Year1
-    dblInventoryToSales(1) = dblInventory(1) / dblRevenue(1)
-    Range("Inventory").Offset(0, 2) = dblInventoryToSales(1)
-    
-    ErrorNum = Year2
-    dblInventoryToSales(2) = dblInventory(2) / dblRevenue(2)
-    Range("Inventory").Offset(0, 3) = dblInventoryToSales(2)
-    
-    ErrorNum = Year3
-    dblInventoryToSales(3) = dblInventory(3) / dblRevenue(3)
-    Range("Inventory").Offset(0, 4) = dblInventoryToSales(3)
+    Range("Inventory").Offset(0, 1).Select
+    If Err Then
+        Selection.HorizontalAlignment = xlCenter
+        Selection.Value = STR_NO_DATA
+        Err.Clear
+    Else
+        If dblInventoryToSales(0) > INVENTORY_MAX Then
+            Selection.Font.ColorIndex = FONT_COLOR_RED
+        Else
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        End If
+        Selection.Value = dblInventoryToSales(0)
+    End If
+        
+    'populate Inventory/Sales information
+    For i = 1 To (iYearsAvailableIncome - 1)
+        dblInventoryToSales(i) = dblInventory(i) / dblRevenue(i)
+        Range("Inventory").Offset(0, i + 1).Select
+        If Err Then
+            Selection.HorizontalAlignment = xlCenter
+            Selection.Value = STR_NO_DATA
+            Err.Clear
+        Else
+            If dblInventoryToSales(i) > INVENTORY_MAX Then
+                Selection.Font.ColorIndex = FONT_COLOR_ORANGE
+            Else
+                Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            End If
+            Selection.Value = dblInventoryToSales(i)
+        End If
+    Next i
 
     CalculateInventoryToSalesYOYGrowth
-    Exit Sub
-    
-ErrorHandler:
-
-    Select Case ErrorNum
-        Case Year0
-            dblInventoryToSales(0) = 0
-            Range("Inventory").Offset(0, 1) = dblInventoryToSales(0)
-        Case Year1
-            dblInventoryToSales(1) = 0
-            Range("Inventory").Offset(0, 2) = dblInventoryToSales(1)
-        Case Year2
-            dblInventoryToSales(2) = 0
-            Range("Inventory").Offset(0, 3) = dblInventoryToSales(2)
-        Case Year3
-            dblInventoryToSales(3) = 0
-            Range("Inventory").Offset(0, 4) = dblInventoryToSales(3)
-   End Select
-   
-   CalculateInventoryToSalesYOYGrowth
 
 End Sub
 
@@ -409,16 +352,22 @@ End Sub
 Sub CalculateInventoryToSalesYOYGrowth()
 
     Dim dblYOYGrowth(0 To 3) As Double
+    Dim i As Integer
     
-    Range("InventoryYOYGrowth") = "YOY Growth (%)"
+    On Error Resume Next
 
     'populate YOY growth information
     '(0) is most recent year
-    dblYOYGrowth(0) = CalculateYOYGrowth(dblInventoryToSales(0), dblInventoryToSales(1))
-    dblYOYGrowth(1) = CalculateYOYGrowth(dblInventoryToSales(1), dblInventoryToSales(2))
-    dblYOYGrowth(2) = CalculateYOYGrowth(dblInventoryToSales(2), dblInventoryToSales(3))
+    For i = 0 To (iYearsAvailableIncome - 2)
+        dblYOYGrowth(i) = CalculateYOYGrowth(dblInventoryToSales(i), dblInventoryToSales(i + 1))
+        
+        If Err Then
+            dblYOYGrowth(i) = 0
+            Err.Clear
+        End If
+    Next i
     
-    Call EvaluateRedFlagYOYGrowth(Range("InventoryYOYGrowth"), dblYOYGrowth(0), dblYOYGrowth(1), dblYOYGrowth(2))
+    Call EvaluateRedFlagYOYGrowth(Range("InventoryYOYGrowth"), dblYOYGrowth)
     
 End Sub
 
@@ -427,11 +376,7 @@ End Sub
 '
 ' Description:  Display SGA to Sales information.
 '               Call procedure to display YOY growth information
-'
-'               catch divide by 0 errors
-'               ErrorNum serves as markers to indicate which
-'               year data generates the error
-'               -> set growth to 0 if error
+'               catch errors and set value to STR_NO_DATA
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -446,58 +391,24 @@ End Sub
 '===============================================================
 Sub EvaluateSGAToSales()
 
-    Dim ErrorNum As Years   'used to catch errors for each year of data
+    Dim i As Integer
     
-    On Error GoTo ErrorHandler
+    On Error Resume Next
     
-'   populate SGA to Sales information
-    ErrorNum = Year0
-    dblSGAToSales(0) = dblSGA(0) / dblRevenue(0)
-    Range("SGA").Offset(0, 1) = dblSGAToSales(0)
-    
-    ErrorNum = Year1
-    dblSGAToSales(1) = dblSGA(1) / dblRevenue(1)
-    Range("SGA").Offset(0, 2) = dblSGAToSales(1)
-    
-    ErrorNum = Year2
-    dblSGAToSales(2) = dblSGA(2) / dblRevenue(2)
-    Range("SGA").Offset(0, 3) = dblSGAToSales(2)
-    
-    ErrorNum = Year3
-    dblSGAToSales(3) = dblSGA(3) / dblRevenue(3)
-    Range("SGA").Offset(0, 4) = dblSGAToSales(3)
-
-    Range("SGA").AddComment
-    Range("SGA").Comment.Visible = False
-    Range("SGA").Comment.Text Text:="Overhead costs" & Chr(10) & _
-                "operating expenses except cost of sales, " & Chr(10) & _
-                "R&D, and depreciation and amortization." & Chr(10) & _
-                "can be used to detect operational problems along with deteriorating operating margins" & Chr(10) & _
-                "SGA/Sales should be stable and not increasing"
-    Range("SGA").Comment.Shape.TextFrame.AutoSize = True
+    'populate SGA to Sales information
+    For i = 0 To (iYearsAvailableIncome - 1)
+        dblSGAToSales(i) = dblSGA(i) / dblRevenue(i)
+        Range("SGA").Offset(0, i + 1).Select
+        If Err Then
+            Selection.HorizontalAlignment = xlCenter
+            Selection.Value = STR_NO_DATA
+            Err.Clear
+        Else
+            Selection.Value = dblSGAToSales(i)
+        End If
+    Next i
     
     CalculateSGAToSalesYOYGrowth
-    
-    Exit Sub
-    
-ErrorHandler:
-
-    Select Case ErrorNum
-        Case Year0
-            dblSGAToSales(0) = 0
-            Range("SGA").Offset(0, 1) = dblSGAToSales(0)
-        Case Year1
-            dblSGAToSales(1) = 0
-            Range("SGA").Offset(0, 2) = dblSGAToSales(1)
-        Case Year2
-            dblSGAToSales(2) = 0
-            Range("SGA").Offset(0, 3) = dblSGAToSales(2)
-        Case Year3
-            dblSGAToSales(3) = 0
-            Range("SGA").Offset(0, 4) = dblSGAToSales(3)
-   End Select
-   
-   CalculateSGAToSalesYOYGrowth
 
 End Sub
 
@@ -521,16 +432,20 @@ End Sub
 Sub CalculateSGAToSalesYOYGrowth()
 
     Dim dblYOYGrowth(0 To 3) As Double
-    
-    Range("SGAYOYGrowth") = "YOY Growth (%)"
+    Dim i As Integer
 
     'populate YOY growth information
     '(0) is most recent year
-    dblYOYGrowth(0) = CalculateYOYGrowth(dblSGAToSales(0), dblSGAToSales(1))
-    dblYOYGrowth(1) = CalculateYOYGrowth(dblSGAToSales(1), dblSGAToSales(2))
-    dblYOYGrowth(2) = CalculateYOYGrowth(dblSGAToSales(2), dblSGAToSales(3))
+    For i = 0 To (iYearsAvailableIncome - 2)
+        dblYOYGrowth(i) = CalculateYOYGrowth(dblSGAToSales(i), dblSGAToSales(i + 1))
+        
+        If Err Then
+            dblYOYGrowth(i) = 0
+            Err.Clear
+        End If
+    Next i
     
-    Call EvaluateRedFlagYOYGrowth(Range("SGAYOYGrowth"), dblYOYGrowth(0), dblYOYGrowth(1), dblYOYGrowth(2))
+    Call EvaluateRedFlagYOYGrowth(Range("SGAYOYGrowth"), dblYOYGrowth)
     
 End Sub
 
@@ -546,43 +461,29 @@ End Sub
 ' Notes:        N/A
 '
 ' Parameters:   YOYGrowth As Range -> first cell of net margin YOY growth
-'               YOY1, YOY2, YOY3, YOY4 -> YOY growth values
-'                                         (YOY1 is most recent year)
+'               YOY array -> YOY growth values
+'                            YOY(0) is most recent year
 '
 ' Returns:      N/A
 '
 ' Rev History:  20Sept14 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Function EvaluateRedFlagYOYGrowth(YOYGrowth As Range, YOY1, YOY2, YOY3)
+Function EvaluateRedFlagYOYGrowth(YOYGrowth As Range, YOY() As Double)
     
-    YOYGrowth.Offset(0, 3).Select
-    If YOY3 > RED_FLAG_GROWTH_MAX Then
-        Selection.Font.ColorIndex = FONT_COLOR_RED
-        ResultRedFlags = FAIL
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 3) = YOY3
+    Dim i As Integer
     
-    YOYGrowth.Offset(0, 2).Select
-        If YOY2 > RED_FLAG_GROWTH_MAX Then
-        Selection.Font.ColorIndex = FONT_COLOR_RED
-        ResultRedFlags = FAIL
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 2) = YOY2
-    
-    YOYGrowth.Offset(0, 1).Select
-    If YOY1 > RED_FLAG_GROWTH_MAX Then
-        Selection.Font.ColorIndex = FONT_COLOR_RED
-        ResultRedFlags = FAIL
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 1) = YOY1
-    
+    For i = 0 To (iYearsAvailableIncome - 2)
+        YOYGrowth.Offset(0, i + 1).Select
+        If YOY(i) > RED_FLAG_GROWTH_MAX Then
+            Selection.Font.ColorIndex = FONT_COLOR_RED
+            ResultRedFlags = FAIL
+        Else
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        End If
+        Selection.Value = YOY(i)
+    Next i
+
 End Function
 
 '===============================================================
@@ -604,11 +505,12 @@ End Function
 '===============================================================
 Sub EvaluateDividendPerShare()
     
-'   populate Dividend Per Share information
-    Range("Dividend").Offset(0, 1) = dblDividendPerShare(0)
-    Range("Dividend").Offset(0, 2) = dblDividendPerShare(1)
-    Range("Dividend").Offset(0, 3) = dblDividendPerShare(2)
-    Range("Dividend").Offset(0, 4) = dblDividendPerShare(3)
+    Dim i As Integer
+    
+    'populate Dividend Per Share information
+    For i = 0 To (iYearsAvailableIncome - 1)
+        Range("Dividend").Offset(0, i + 1) = dblDividendPerShare(i)
+    Next i
     
     CalculateDividendPerShareYOYGrowth
     
@@ -634,16 +536,20 @@ End Sub
 Sub CalculateDividendPerShareYOYGrowth()
 
     Dim dblYOYGrowth(0 To 2) As Double
-    
-    Range("DividendYOYGrowth") = "YOY Growth (%)"
+    Dim i As Integer
 
     'populate YOY growth information
     '(0) is most recent year
-    dblYOYGrowth(0) = CalculateYOYGrowth(dblDividendPerShare(0), dblDividendPerShare(1))
-    dblYOYGrowth(1) = CalculateYOYGrowth(dblDividendPerShare(1), dblDividendPerShare(2))
-    dblYOYGrowth(2) = CalculateYOYGrowth(dblDividendPerShare(2), dblDividendPerShare(3))
+    For i = 0 To (iYearsAvailableIncome - 2)
+        dblYOYGrowth(i) = CalculateYOYGrowth(dblDividendPerShare(i), dblDividendPerShare(i + 1))
+        
+        If Err Then
+            dblYOYGrowth(i) = 0
+            Err.Clear
+        End If
+    Next i
     
-    Call EvaluateDivPerShareYOYGrowth(Range("DividendYOYGrowth"), dblYOYGrowth(0), dblYOYGrowth(1), dblYOYGrowth(2))
+    Call EvaluateDivPerShareYOYGrowth(Range("DividendYOYGrowth"), dblYOYGrowth)
     
     
 End Sub
@@ -652,50 +558,46 @@ End Sub
 ' Procedure:    EvaluateDivPerShareYOYGrowth
 '
 ' Description:  Display YOY growth information.
-'               if dividend is decreasing -> red font
+'               if most recent year dividend is decreasing -> red font
 '               else dividend is increasing -> green font
+'
+'               if past year dividend is decreasing -> warning
 '
 ' Author:       Janice Laset Parkerson
 '
 ' Notes:        N/A
 '
 ' Parameters:   YOYGrowth As Range -> first cell of net margin YOY growth
-'               YOY1, YOY2, YOY3, YOY4 -> YOY growth values
-'                                         (YOY1 is most recent year)
+'               YOY array -> YOY growth values
+'                            YOY(0) is most recent year
 '
 ' Returns:      N/A
 '
 ' Rev History:  20Sept14 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Function EvaluateDivPerShareYOYGrowth(YOYGrowth As Range, YOY1, YOY2, YOY3)
+Function EvaluateDivPerShareYOYGrowth(YOYGrowth As Range, YOY() As Double)
     
-    YOYGrowth.Offset(0, 3).Select
-    If YOY3 < 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_RED
-        ResultRedFlags = FAIL
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 3) = YOY3
-    
-    YOYGrowth.Offset(0, 2).Select
-    If YOY2 < 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_RED
-        ResultRedFlags = FAIL
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 2) = YOY2
+    Dim i As Integer
     
     YOYGrowth.Offset(0, 1).Select
-    If YOY1 < 0 Then
+    If YOY(0) < 0 Then
         Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultRedFlags = FAIL
     Else
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
     End If
-    YOYGrowth.Offset(0, 1) = YOY1
+    YOYGrowth.Offset(0, 1) = YOY(0)
+    
+    For i = 1 To (iYearsAvailableIncome - 2)
+        YOYGrowth.Offset(0, i + 1).Select
+        If YOY(i) < 0 Then
+            Selection.Font.ColorIndex = FONT_COLOR_ORANGE
+        Else
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        End If
+        YOYGrowth.Offset(0, i + 1) = YOY(i)
+    Next i
     
 End Function
 

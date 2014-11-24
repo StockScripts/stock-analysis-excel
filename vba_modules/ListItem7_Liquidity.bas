@@ -9,15 +9,14 @@ Private ResultLiquidity As Result
 '===============================================================
 ' Procedure:    EvaluateQuickRatio
 '
-' Description:  Display quick ratio information.
+' Description:  Call procedure to display liquidity information.
 '               Call procedure to display YOY growth information
-'               if quick ratio is greater than or equal to required min -> green font
-'               else -> red font
+'               if recent year quick ratio > required min -> pass
+'               else -> fail
 '
-'               catch divide by 0 errors
-'               ErrorNum serves as markers to indicate which
-'               year data generates the error
-'               -> set growth to 0 if error
+'               if past year quick ratio > required min -> warning
+'
+'               catch errors and set value to STR_NO_DATA
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -32,82 +31,129 @@ Private ResultLiquidity As Result
 '===============================================================
 Sub EvaluateQuickRatio()
 
-    Dim ErrorNum As Years   'used to catch errors for each year of data
+    Dim i As Integer
     
-    On Error GoTo ErrorHandler
+    On Error Resume Next
 
     ResultLiquidity = PASS
+    
+    DisplayLiquidityInfo
+    
+    dblQuickRatio(0) = (dblCurrentAssets(0) - dblInventory(0)) / dblCurrentLiabilities(0)
+    Range("QuickRatio").Offset(0, 1).Select
+    If Err Then
+        Selection.HorizontalAlignment = xlCenter
+        Selection.Value = STR_NO_DATA
+        Err.Clear
+    Else
+        If dblQuickRatio(0) >= QUICK_RATIO_MIN Then
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        Else
+            Selection.Font.ColorIndex = FONT_COLOR_RED
+            ResultLiquidity = FAIL
+        End If
+        Selection.Value = dblQuickRatio(0)
+    End If
+    
+    For i = 1 To (iYearsAvailableIncome - 1)
+        dblQuickRatio(i) = (dblCurrentAssets(i) - dblInventory(i)) / dblCurrentLiabilities(0)
+        Range("QuickRatio").Offset(0, i + 1).Select
+        If Err Then
+            Selection.HorizontalAlignment = xlCenter
+            Selection.Value = STR_NO_DATA
+            Err.Clear
+        Else
+            If dblQuickRatio(i) >= QUICK_RATIO_MIN Then
+                Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            Else
+                Selection.Font.ColorIndex = FONT_COLOR_ORANGE
+                ResultLiquidity = FAIL
+            End If
+            Selection.Value = dblQuickRatio(i)
+        End If
+    Next i
+
+    CalculateQuickRatioYOYGrowth
+
+End Sub
+
+'===============================================================
+' Procedure:    DisplayLiquidityInfo
+'
+' Description:  Comment box information for Liquidity
+'               - quick ratio requirements
+'               - quick ratio info
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:  11Nov14 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub DisplayLiquidityInfo()
+
+    Dim dblCurrentAssetsYOYGrowth(0 To 3) As Double
+    Dim strCurrentAssetsYOYGrowth(0 To 3) As String
+    
+    Dim dblInventoryYOYGrowth(0 To 3) As Double
+    Dim strInventoryYOYGrowth(0 To 3) As String
+    
+    Dim dblCurrentLiabilitiesYOYGrowth(0 To 3) As Double
+    Dim strCurrentLiabilitiesYOYGrowth(0 To 3) As String
+    
+    Dim i As Integer
     
     Range("ListItemQuickRatio") = "Are debts covered?"
     Range("QuickRatio") = "Quick Ratio"
     
-    Range("QuickRatio").AddComment
-    Range("QuickRatio").Comment.Visible = False
-    Range("QuickRatio").Comment.Text Text:="quick ratio = (current assets - inventory) / current liabilities" & Chr(10) & _
-                "must be > 2 and not decreasing" & Chr(10) & _
-                "better measure than current ratio which includes inventory and is thus higher"
-    Range("QuickRatio").Comment.Shape.TextFrame.AutoSize = True
+    With Range("ListItemQuickRatio")
+        .AddComment
+        .Comment.Visible = False
+        .Comment.Text Text:="What is it:" & Chr(10) & _
+                "   Quick ratio is used to gauge a company's liquidity. It is a better measure than " & Chr(10) & _
+                "   current ratio because it excludes inventory, which takes time to be converted to cash." & Chr(10) & _
+                "Why is it important:" & Chr(10) & _
+                "   Quick ratio measures the company's ability to pay their short term obligations." & Chr(10) & _
+                "What to look for:" & Chr(10) & _
+                "   Quick ratio should be greater than 1 and not decreasing." & Chr(10) & _
+                "What to watch for:" & Chr(10) & _
+                "   A high ratio means a better position for the company, but it also means the cash is not being used for growth." & Chr(10) & _
+                "   A company with a quick ratio of less than 1 cannot currently pay its current liabilities."
+        .Comment.Shape.TextFrame.AutoSize = True
+    End With
     
-    ErrorNum = Year0
+    'calculate YOY growth
+    For i = 0 To (iYearsAvailableIncome - 2)
+        dblCurrentAssetsYOYGrowth(i) = CalculateYOYGrowth(dblCurrentAssets(i), dblCurrentAssets(i + 1))
+        strCurrentAssetsYOYGrowth(i) = Format(dblCurrentAssetsYOYGrowth(i), "0.0%")
+        
+        dblInventoryYOYGrowth(i) = CalculateYOYGrowth(dblInventory(i), dblInventory(i + 1))
+        strInventoryYOYGrowth(i) = Format(dblInventoryYOYGrowth(i), "0.0%")
+        
+        dblCurrentLiabilitiesYOYGrowth(i) = CalculateYOYGrowth(dblCurrentLiabilities(i), dblCurrentLiabilities(i + 1))
+        strCurrentLiabilitiesYOYGrowth(i) = Format(dblCurrentLiabilitiesYOYGrowth(i), "0.0%")
+    Next i
     
-    dblQuickRatio(0) = (dblCurrentAssets(0) - dblInventory(0)) / dblCurrentLiabilities(0)
-    If dblQuickRatio(0) >= QUICK_RATIO_MIN Then     'if quick ratio is greater than the required minimum
-        Range("QuickRatio").Offset(0, 1).Font.ColorIndex = FONT_COLOR_GREEN
-    Else                                            'if quick ratio is less than the required minimum
-        Range("QuickRatio").Offset(0, 1).Font.ColorIndex = FONT_COLOR_RED
-        ResultLiquidity = FAIL
-    End If
-    Range("QuickRatio").Offset(0, 1) = dblQuickRatio(0)
-    
-    ErrorNum = Year1
-    dblQuickRatio(1) = (dblCurrentAssets(1) - dblInventory(1)) / dblCurrentLiabilities(1)
-    If dblQuickRatio(1) >= QUICK_RATIO_MIN Then
-        Range("QuickRatio").Offset(0, 2).Font.ColorIndex = FONT_COLOR_GREEN
-    Else
-        Range("QuickRatio").Offset(0, 2).Font.ColorIndex = FONT_COLOR_ORANGE
-    End If
-    Range("QuickRatio").Offset(0, 2) = dblQuickRatio(1)
-    
-    ErrorNum = Year2
-    dblQuickRatio(2) = (dblCurrentAssets(2) - dblInventory(2)) / dblCurrentLiabilities(2)
-    If dblQuickRatio(2) >= QUICK_RATIO_MIN Then
-        Range("QuickRatio").Offset(0, 3).Font.ColorIndex = FONT_COLOR_GREEN
-    Else
-        Range("QuickRatio").Offset(0, 3).Font.ColorIndex = FONT_COLOR_ORANGE
-    End If
-    Range("QuickRatio").Offset(0, 3) = dblQuickRatio(2)
-    
-    ErrorNum = Year3
-    dblQuickRatio(3) = (dblCurrentAssets(3) - dblInventory(3)) / dblCurrentLiabilities(3)
-    If dblQuickRatio(3) >= QUICK_RATIO_MIN Then
-        Range("QuickRatio").Offset(0, 4).Font.ColorIndex = FONT_COLOR_GREEN
-    Else
-        Range("QuickRatio").Offset(0, 4).Font.ColorIndex = FONT_COLOR_ORANGE
-    End If
-    Range("QuickRatio").Offset(0, 4) = dblQuickRatio(3)
-    
-    CalculateQuickRatioYOYGrowth
-    
-    Exit Sub
-    
-ErrorHandler:
-
-    Select Case ErrorNum
-        Case Year0
-            dblQuickRatio(0) = 0
-            Range("QuickRatio").Offset(0, 1) = dblQuickRatio(0)
-        Case Year1
-            dblQuickRatio(1) = 0
-            Range("QuickRatio").Offset(0, 2) = dblQuickRatio(1)
-        Case Year2
-            dblQuickRatio(2) = 0
-            Range("QuickRatio").Offset(0, 3) = dblQuickRatio(2)
-        Case Year3
-            dblQuickRatio(3) = 0
-            Range("QuickRatio").Offset(0, 4) = dblQuickRatio(3)
-   End Select
-    
-   CalculateQuickRatioYOYGrowth
+    With Range("QuickRatio")
+        .AddComment
+        .Comment.Visible = False
+        .Comment.Text Text:="Quick Ratio = (Current Assets - Inventory) / Current Liabilities" & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Current Assets" & "                " & dblCurrentAssets(0) & "      " & dblCurrentAssets(1) & "      " & dblCurrentAssets(2) & "      " & dblCurrentAssets(3) & Chr(10) & _
+                "YOY Current Assets Growth     " & strCurrentAssetsYOYGrowth(0) & "     " & strCurrentAssetsYOYGrowth(1) & "     " & strCurrentAssetsYOYGrowth(2) & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Inventory" & "                " & dblInventory(0) & "      " & dblInventory(1) & "      " & dblInventory(2) & "      " & dblInventory(3) & Chr(10) & _
+                "YOY Inventory Growth     " & strInventoryYOYGrowth(0) & "     " & strInventoryYOYGrowth(1) & "     " & strInventoryYOYGrowth(2) & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Current Liabilities              " & dblCurrentLiabilities(0) & "      " & dblCurrentLiabilities(1) & "      " & dblCurrentLiabilities(2) & "      " & dblCurrentLiabilities(3) & Chr(10) & _
+                "YOY Current Liabilities Growth   " & strCurrentLiabilitiesYOYGrowth(0) & "     " & strCurrentLiabilitiesYOYGrowth(1) & "     " & strCurrentLiabilitiesYOYGrowth(2) & ""
+        .Comment.Shape.TextFrame.AutoSize = True
+    End With
 
 End Sub
 
@@ -131,16 +177,22 @@ End Sub
 Sub CalculateQuickRatioYOYGrowth()
 
     Dim dblYOYGrowth(0 To 3) As Double
+    Dim i As Integer
     
     Range("QuickRatioYOYGrowth") = "YOY Growth (%)"
 
     'populate YOY growth information
     '(0) is most recent year
-    dblYOYGrowth(0) = CalculateYOYGrowth(dblQuickRatio(0), dblQuickRatio(1))
-    dblYOYGrowth(1) = CalculateYOYGrowth(dblQuickRatio(1), dblQuickRatio(2))
-    dblYOYGrowth(2) = CalculateYOYGrowth(dblQuickRatio(2), dblQuickRatio(3))
+    For i = 0 To (iYearsAvailableIncome - 2)
+        dblYOYGrowth(i) = CalculateYOYGrowth(dblQuickRatio(i), dblQuickRatio(i + 1))
+        
+        If Err Then
+            dblYOYGrowth(i) = 0
+            Err.Clear
+        End If
+    Next i
     
-    Call EvaluateQuickRatioYOYGrowth(Range("QuickRatioYOYGrowth"), dblYOYGrowth(0), dblYOYGrowth(1), dblYOYGrowth(2))
+    Call EvaluateQuickRatioYOYGrowth(Range("QuickRatioYOYGrowth"), dblYOYGrowth)
     
 End Sub
 
@@ -149,7 +201,7 @@ End Sub
 '
 ' Description:  Display YOY growth information.
 '               for the most recent year
-'                   if quick ratio is less than the min and decreasing -> red font
+'                   if quick ratio is less than the min -> red font
 '                   else if quick ratio is decreasing -> orange font
 '                   else quick ratio is increasing -> green font
 '               for previous years
@@ -161,42 +213,38 @@ End Sub
 ' Notes:        N/A
 '
 ' Parameters:   YOYGrowth As Range -> first cell of net margin YOY growth
-'               YOY1, YOY2, YOY3, YOY4 -> YOY growth values
-'                                         (YOY1 is most recent year)
+'               YOY array -> YOY growth values
+'                            YOY(0) is most recent year
 '
 ' Returns:      N/A
 '
 ' Rev History:  19Sept14 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Function EvaluateQuickRatioYOYGrowth(YOYGrowth As Range, YOY1, YOY2, YOY3)
+Function EvaluateQuickRatioYOYGrowth(YOYGrowth As Range, YOY() As Double)
     
-    YOYGrowth.Offset(0, 3).Select
-    If dblQuickRatio(2) < QUICK_RATIO_MIN Or YOY3 < 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 3) = YOY3
-    
-    YOYGrowth.Offset(0, 2).Select
-    If dblQuickRatio(1) < QUICK_RATIO_MIN Or YOY2 < 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 2) = YOY2
+    Dim i As Integer
     
     YOYGrowth.Offset(0, 1).Select
-    If dblQuickRatio(0) < QUICK_RATIO_MIN And YOY1 < 0 Then
+    If dblQuickRatio(0) < QUICK_RATIO_MIN Then
         Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultLiquidity = FAIL
-    ElseIf YOY1 < 0 Then
+    ElseIf YOY(0) < 0 Then
         Selection.Font.ColorIndex = FONT_COLOR_ORANGE
     Else
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
     End If
-    YOYGrowth.Offset(0, 1) = YOY1
+    Selection.Value = YOY(0)
+    
+    For i = 1 To (iYearsAvailableIncome - 2)
+        YOYGrowth.Offset(0, i + 1).Select
+        If dblQuickRatio(i) < QUICK_RATIO_MIN Or YOY(i) < 0 Then
+            Selection.Font.ColorIndex = FONT_COLOR_ORANGE
+        Else
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        End If
+        YOYGrowth.Offset(0, i + 1) = YOY(i)
+    Next i
     
     CheckLiquidityPassFail
     

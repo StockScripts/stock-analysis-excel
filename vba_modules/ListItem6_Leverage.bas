@@ -57,7 +57,21 @@ End Sub
 '               - Initial Version
 '===============================================================
 Sub DisplayLeverageInfo()
-
+    
+    Dim dblAssetsYOYGrowth(0 To 3) As Double
+    Dim strAssetsYOYGrowth(0 To 3) As String
+    
+    Dim dblLiabilitiesYOYGrowth(0 To 3) As Double
+    Dim strLiabilitiesYOYGrowth(0 To 3) As String
+    
+    Dim dblTotalDebtYOYGrowth(0 To 3) As Double
+    Dim strTotalDebtYOYGrowth(0 To 3) As String
+    
+    Dim dblEquityYOYGrowth(0 To 2) As Double
+    Dim strEquityYOYGrowth(0 To 2) As String
+    
+    Dim i As Integer
+    
     Range("ListItemFinancialLeverage") = "Is it leveraged?"
     Range("LeverageRatio") = "Leverage Ratio"
     Range("DebtToEquity") = "Debt To Equity"
@@ -81,19 +95,50 @@ Sub DisplayLeverageInfo()
         .Comment.Shape.TextFrame.AutoSize = True
     End With
     
+    'calculate YOY growth
+    For i = 0 To (iYearsAvailableIncome - 2)
+        dblAssetsYOYGrowth(i) = CalculateYOYGrowth(dblAssets(i), dblAssets(i + 1))
+        strAssetsYOYGrowth(i) = Format(dblAssetsYOYGrowth(i), "0.0%")
+        
+        dblLiabilitiesYOYGrowth(i) = CalculateYOYGrowth(dblLiabilities(i), dblLiabilities(i + 1))
+        strLiabilitiesYOYGrowth(i) = Format(dblLiabilitiesYOYGrowth(i), "0.0%")
+        
+        dblTotalDebtYOYGrowth(i) = CalculateYOYGrowth(dblTotalDebt(i), dblTotalDebt(i + 1))
+        strTotalDebtYOYGrowth(i) = Format(dblTotalDebtYOYGrowth(i), "0.0%")
+        
+        dblEquityYOYGrowth(i) = CalculateYOYGrowth(dblEquity(i), dblEquity(i + 1))
+        strEquityYOYGrowth(i) = Format(dblEquityYOYGrowth(i), "0.0%")
+    Next i
+    
     With Range("LeverageRatio")
         .AddComment
         .Comment.Visible = False
-        .Comment.Text Text:="Leverage Ratio = Liabilities/Equity " & Chr(10) & _
-                "Assets/Equity = (Equity + Liabilities)/Equity " & Chr(10) & _
-                "              = 1 + (Liabilities/Equity)"
+        .Comment.Text Text:="Assets/Equity = (Equity + Liabilities)/Equity " & Chr(10) & _
+                "                   = 1 + (Liabilities/Equity)" & Chr(10) & _
+                "" & Chr(10) & _
+                "Leverage Ratio = Liabilities/Equity" & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Total Assets" & "               " & dblAssets(0) & "      " & dblAssets(1) & "      " & dblAssets(2) & "      " & dblAssets(3) & Chr(10) & _
+                "YOY Total Debt Growth     " & strAssetsYOYGrowth(0) & "     " & strAssetsYOYGrowth(1) & "     " & strAssetsYOYGrowth(2) & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Total Liabilities" & "                " & dblLiabilities(0) & "      " & dblLiabilities(1) & "      " & dblLiabilities(2) & "      " & dblLiabilities(3) & Chr(10) & _
+                "YOY Total Liabilities Growth     " & strLiabilitiesYOYGrowth(0) & "     " & strLiabilitiesYOYGrowth(1) & "     " & strLiabilitiesYOYGrowth(2) & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Equity              " & dblEquity(0) & "     " & dblEquity(1) & "     " & dblEquity(2) & "     " & dblEquity(3) & Chr(10) & _
+                "YOY Equity Growth   " & strEquityYOYGrowth(0) & "     " & strEquityYOYGrowth(1) & "     " & strEquityYOYGrowth(2) & ""
         .Comment.Shape.TextFrame.AutoSize = True
     End With
     
     With Range("DebtToEquity")
         .AddComment
         .Comment.Visible = False
-        .Comment.Text Text:="Debt to Equity = Total Debt/Equity "
+        .Comment.Text Text:="Debt to Equity = Total Debt/Equity " & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Total Debt" & "                " & dblTotalDebt(0) & "      " & dblTotalDebt(1) & "      " & dblTotalDebt(2) & "      " & dblTotalDebt(3) & Chr(10) & _
+                "YOY Total Debt Growth     " & strTotalDebtYOYGrowth(0) & "     " & strTotalDebtYOYGrowth(1) & "     " & strTotalDebtYOYGrowth(2) & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Equity              " & dblEquity(0) & "     " & dblEquity(1) & "     " & dblEquity(2) & "     " & dblEquity(3) & Chr(10) & _
+                "YOY Equity Growth   " & strEquityYOYGrowth(0) & "     " & strEquityYOYGrowth(1) & "     " & strEquityYOYGrowth(2) & ""
         .Comment.Shape.TextFrame.AutoSize = True
     End With
 

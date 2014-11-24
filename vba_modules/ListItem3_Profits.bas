@@ -14,9 +14,6 @@ Private ResultProfits As Result
 '               else -> green font -> pass
 '
 '               catch divide by 0 errors
-'               ErrorNum serves as markers to indicate which
-'               year data generates the error
-'               -> set growth to 0 if error
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -31,7 +28,6 @@ Private ResultProfits As Result
 '===============================================================
 Sub EvaluateNetMargin()
     
-    Dim ErrorNum As Years   'used to catch errors for each year of data
     Dim i As Integer
     
     On Error Resume Next
@@ -40,19 +36,21 @@ Sub EvaluateNetMargin()
     
     'net margin = net income / revenue
     For i = 0 To (iYearsAvailableIncome - 1)
+        Range("NetMargin").Offset(0, i + 1).Select
         dblNetMargin(i) = dblNetIncome(i) / dblRevenue(i)
-        If dblNetMargin(i) > 0 Then     'if net margin is positive
-            Range("NetMargin").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_GREEN
-        Else                            'if net margin is 0 or negative
-            Range("NetMargin").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_RED
-            ResultProfits = FAIL
-        End If
-        
-        If Err = ERROR_CODE_OVERFLOW Then
-            dblNetMargin(i) = 0
+        If Err Then
+            Selection.HorizontalAlignment = xlCenter
+            Selection.Value = STR_NO_DATA
             Err.Clear
+        Else
+            If dblNetMargin(i) > 0 Then
+                Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            Else
+                Selection.Font.ColorIndex = FONT_COLOR_RED
+                ResultProfits = FAIL
+            End If
+            Selection.Value = dblNetMargin(i)
         End If
-        Range("NetMargin").Offset(0, i + 1) = dblNetMargin(i)
     Next i
     
     DisplayProfitsInfo
@@ -138,6 +136,7 @@ Sub DisplayProfitsInfo()
         .AddComment
         .Comment.Visible = False
         .Comment.Text Text:="Net Profit Margin = Net Income / Revenue" & Chr(10) & _
+                "" & Chr(10) & _
                 "YOY Net Income              " & dblNetIncome(0) & "     " & dblNetIncome(1) & "     " & dblNetIncome(2) & "     " & dblNetIncome(3) & Chr(10) & _
                 "YOY Net Income Growth   " & strNetIncomeYOYGrowth(0) & "     " & strNetIncomeYOYGrowth(1) & "     " & strNetIncomeYOYGrowth(2) & Chr(10) & _
                 "" & Chr(10) & _

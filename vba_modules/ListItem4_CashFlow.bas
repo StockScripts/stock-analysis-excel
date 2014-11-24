@@ -7,11 +7,11 @@ Private ResultCashFlow As Result
 ' Procedure:    EvaluateFreeCashFlow
 '
 ' Description:  Display free cash flow information.
-'               Only Cash flow for most recent year must be positive.
-'               if recent year cash flow > 0 -> green font -> pass
-'               else -> red font -> fail
-'               if past years cash flow > 0 -> green font -> pass
-'               else -> orange font -> pass
+'               Cash flow for most recent year must be positive.
+'               if recent year cash flow > 0 -> pass
+'               else -> fail
+'               if past years cash flow > 0 -> pass
+'               else -> warning
 '               Call procedure to display YOY growth information
 '
 ' Author:       Janice Laset Parkerson
@@ -35,21 +35,23 @@ Sub EvaluateFreeCashFlow()
     ResultCashFlow = PASS
     
 '   populate free cash flow information
+    Range("FreeCashFlow").Offset(0, 1).Select
     If dblFreeCashFlow(0) > 0 Then
-        Range("FreeCashFlow").Offset(0, 1).Font.ColorIndex = FONT_COLOR_GREEN
+        Selection.Font.ColorIndex = FONT_COLOR_GREEN
     Else
-        Range("FreeCashFlow").Offset(0, 1).Font.ColorIndex = FONT_COLOR_RED
+        Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultCashFlow = FAIL
     End If
-    Range("FreeCashFlow").Offset(0, 1) = dblFreeCashFlow(0)
+    Selection.Value = dblFreeCashFlow(0)
     
     For i = 1 To (iYearsAvailableIncome - 1)
+        Range("FreeCashFlow").Offset(0, i + 1).Select
         If dblFreeCashFlow(i) > 0 Then
-            Range("FreeCashFlow").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_GREEN
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
         Else
-            Range("FreeCashFlow").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_ORANGE
+            Selection.Font.ColorIndex = FONT_COLOR_ORANGE
         End If
-        Range("FreeCashFlow").Offset(0, i + 1) = dblFreeCashFlow(i)
+        Selection.Value = dblFreeCashFlow(i)
     Next i
     
     DisplayFreeCashFlowInfo
@@ -59,7 +61,7 @@ Sub EvaluateFreeCashFlow()
 End Sub
 
 '===============================================================
-' Procedure:    DisplayEarningsInfo
+' Procedure:    DisplayFreeCashFlowInfo
 '
 ' Description:  Comment box information for free cash flow
 '               - cash flow requirements
@@ -78,6 +80,15 @@ End Sub
 '===============================================================
 Sub DisplayFreeCashFlowInfo()
 
+    Dim dblOpCashFlowYOYGrowth(0 To 3) As Double
+    Dim strOpCashFlowYOYGrowth(0 To 3) As String
+    
+    Dim dblCapExYOYGrowth(0 To 2) As Double
+    Dim strCapExYOYGrowth(0 To 2) As String
+    Dim dblAbsCapEx(0 To 3) As Double
+    
+    Dim i As Integer
+    
     With Range("ListItemFreeCashFlow")
         .AddComment
         .Comment.Visible = False
@@ -93,10 +104,30 @@ Sub DisplayFreeCashFlowInfo()
         .Comment.Shape.TextFrame.AutoSize = True
     End With
     
+    'get absolute value of cap ex - recorded as negative in statement
+    For i = 0 To (iYearsAvailableIncome - 1)
+        dblAbsCapEx(i) = Abs(dblCapEx(i))
+    Next i
+    
+    'calculate YOY growth
+    For i = 0 To (iYearsAvailableIncome - 2)
+        dblOpCashFlowYOYGrowth(i) = CalculateYOYGrowth(dblOpCashFlow(i), dblOpCashFlow(i + 1))
+        strOpCashFlowYOYGrowth(i) = Format(dblOpCashFlowYOYGrowth(i), "0.0%")
+        
+        dblCapExYOYGrowth(i) = CalculateYOYGrowth(dblAbsCapEx(i), dblAbsCapEx(i + 1))
+        strCapExYOYGrowth(i) = Format(dblCapExYOYGrowth(i), "0.0%")
+    Next i
+    
     With Range("FreeCashFlow")
         .AddComment
         .Comment.Visible = False
-        .Comment.Text Text:="Free Cash flow = Operating Cash Flow - Capital Expenditures"
+        .Comment.Text Text:="Free Cash flow = Operating Cash Flow - Capital Expenditures" & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Operating Cash Flow" & "                " & dblOpCashFlow(0) & "      " & dblOpCashFlow(1) & "      " & dblOpCashFlow(2) & "      " & dblOpCashFlow(3) & Chr(10) & _
+                "YOY Operating Cash Flow Growth     " & strOpCashFlowYOYGrowth(0) & "     " & strOpCashFlowYOYGrowth(1) & "     " & strOpCashFlowYOYGrowth(2) & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Capital Expenditures              " & dblAbsCapEx(0) & "     " & dblAbsCapEx(1) & "     " & dblAbsCapEx(2) & "     " & dblAbsCapEx(3) & Chr(10) & _
+                "YOY Capital Expenditures Growth   " & strCapExYOYGrowth(0) & "     " & strCapExYOYGrowth(1) & "     " & strCapExYOYGrowth(2) & ""
         .Comment.Shape.TextFrame.AutoSize = True
     End With
 
@@ -149,8 +180,8 @@ End Sub
 ' Notes:        N/A
 '
 ' Parameters:   YOYGrowth As Range -> first cell of revenue YOY growth
-'               YOY1, YOY2, YOY3 -> YOY growth values
-'                                   (YOY1 is most recent year)
+'               YOY array -> YOY growth values
+'                            YOY(0) is most recent year
 '
 ' Returns:      N/A
 '

@@ -182,7 +182,7 @@ Sub GetAnnualDataBalanceSheet()
     For i = 1 To 4
         ActiveSheet.Range("A1").Offset(0, i).Value = elColData(i).innerText
         
-        If Err = ERROR_CODE_OBJ_VAR_NOT_SET Then
+        If Err Then
             ActiveSheet.Range("A1").Offset(0, i).Value = Null
         End If
     Next i

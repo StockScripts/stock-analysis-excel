@@ -10,14 +10,12 @@ Private Const ROE_MIN = 0.1
 '
 ' Description:  Display ROE information.
 '               Call procedure to display YOY growth information
-'               if ROE is greater than the required value -> green font
-'               if ROE is positive but less than the required -> orange font
-'               else ROE is negative -> red font
+'               if recent year ROE is greater than the required value -> pass
+'               else -> fail
+'               if past year ROE is less than required -> warning
+'               else -> pass
 '
 '               catch divide by 0 errors
-'               ErrorNum serves as markers to indicate which
-'               year data generates the error
-'               -> set growth to 0 if error
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -31,86 +29,52 @@ Private Const ROE_MIN = 0.1
 '               - Initial Version
 '===============================================================
 Sub EvaluateROE()
-
-    Dim ErrorNum As Years   'used to catch errors for each year of data
+    
+    Dim i As Integer
     
     ResultGrowth = PASS
     
     DisplayROEInfo
         
-    On Error GoTo ErrorHandler
+    On Error Resume Next
     
     'populate ROE information
-    ErrorNum = Year0
-    
     'ROE = net income / equity
+    Range("ROE").Offset(0, 1).Select
     dblROE(0) = dblNetIncome(0) / dblEquity(0)
-    If dblROE(0) >= ROE_MIN Then    'if ROE is greater than required value
-        Range("ROE").Offset(0, 1).Font.ColorIndex = FONT_COLOR_GREEN
-    Else                            'if ROE is 0 or negative
-        Range("ROE").Offset(0, 1).Font.ColorIndex = FONT_COLOR_RED
-        ResultGrowth = FAIL
-    End If
-    Range("ROE").Offset(0, 1) = dblROE(0)
-    
-    ErrorNum = Year1
-    
-    dblROE(1) = dblNetIncome(1) / dblEquity(1)
-    If dblROE(1) >= ROE_MIN Then
-        Range("ROE").Offset(0, 2).Font.ColorIndex = FONT_COLOR_GREEN
+    If Err Then
+        Selection.HorizontalAlignment = xlCenter
+        Selection.Value = STR_NO_DATA
+        Err.Clear
     Else
-        Range("ROE").Offset(0, 2).Font.ColorIndex = FONT_COLOR_RED
-        ResultGrowth = FAIL
+         If dblROE(0) >= ROE_MIN Then
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        Else
+            Selection.Font.ColorIndex = FONT_COLOR_RED
+            ResultGrowth = FAIL
+        End If
+        Selection.Value = dblROE(0)
     End If
-    Range("ROE").Offset(0, 2) = dblROE(1)
     
-    ErrorNum = Year2
-    
-    dblROE(2) = dblNetIncome(2) / dblEquity(2)
-    If dblROE(2) >= ROE_MIN Then
-        Range("ROE").Offset(0, 3).Font.ColorIndex = FONT_COLOR_GREEN
-    Else
-        Range("ROE").Offset(0, 3).Font.ColorIndex = FONT_COLOR_RED
-        ResultGrowth = FAIL
-    End If
-    Range("ROE").Offset(0, 3) = dblROE(2)
-    
-    ErrorNum = Year3
-    
-    dblROE(3) = dblNetIncome(3) / dblEquity(3)
-    If dblROE(3) >= ROE_MIN Then
-        Range("ROE").Offset(0, 4).Font.ColorIndex = FONT_COLOR_GREEN
-    Else
-        Range("ROE").Offset(0, 4).Font.ColorIndex = FONT_COLOR_RED
-        ResultGrowth = FAIL
-    End If
-    Range("ROE").Offset(0, 4) = dblROE(3)
+    For i = 1 To (iYearsAvailableIncome - 1)
+        Range("ROE").Offset(0, i + 1).Select
+        dblROE(i) = dblNetIncome(i) / dblEquity(i)
+        If Err Then
+            Selection.HorizontalAlignment = xlCenter
+            Selection.Value = STR_NO_DATA
+            Err.Clear
+        Else
+             If dblROE(i) >= ROE_MIN Then
+                Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            Else
+                Selection.Font.ColorIndex = FONT_COLOR_ORANGE
+                ResultGrowth = FAIL
+            End If
+            Selection.Value = dblROE(i)
+        End If
+    Next i
     
     CalculateROEYOYGrowth
-    
-    Exit Sub
-    
-ErrorHandler:
-
-    Select Case ErrorNum
-        Case Year0
-            dblROE(0) = 0
-            Range("ROE").Offset(0, 1) = dblROE(0)
-        Case Year1
-            dblROE(1) = 0
-            Range("ROE").Offset(0, 2) = dblROE(1)
-        Case Year2
-            dblROE(2) = 0
-            Range("ROE").Offset(0, 3) = dblROE(2)
-        Case Year3
-            dblROE(3) = 0
-            Range("ROE").Offset(0, 4) = dblROE(3)
-        Case Year4
-            dblROE(4) = 0
-            Range("ROE").Offset(0, 5) = dblROE(4)
-   End Select
-   
-   CalculateROEYOYGrowth
 
 End Sub
 
@@ -134,13 +98,31 @@ End Sub
 '               - Initial Version
 '===============================================================
 Sub DisplayROEInfo()
+
+    Dim dblEquityYOYGrowth(0 To 2) As Double
+    Dim strEquityYOYGrowth(0 To 2) As String
+    
+    Dim dblNetIncomeYOYGrowth(0 To 2) As Double
+    Dim strNetIncomeYOYGrowth(0 To 2) As String
+    
+    Dim dblProfitMargin(0 To 3) As Double
+    Dim strProfitMargin(0 To 3) As String
+    
+    Dim dblProfitMarginYOYGrowth(0 To 2) As Double
+    Dim strProfitMarginYOYGrowth(0 To 2) As String
     
     Dim dblAssetTurnover(0 To 3) As Double
     Dim strAssetTurnover(0 To 3) As String
+    
     Dim dblAssetTurnoverYOYGrowth(0 To 2) As Double
     Dim strAssetTurnoverYOYGrowth(0 To 2) As String
-    Dim dblEquityYOYGrowth(0 To 2) As Double
-    Dim strEquityYOYGrowth(0 To 2) As String
+    
+    Dim dblLeverage(0 To 3) As Double
+    Dim strLeverage(0 To 3) As String
+    
+    Dim dblLeverageYOYGrowth(0 To 2) As Double
+    Dim strLeverageYOYGrowth(0 To 2) As String
+    
     Dim i As Integer
     
     On Error Resume Next
@@ -167,48 +149,78 @@ Sub DisplayROEInfo()
         .Comment.Shape.TextFrame.AutoSize = True
     End With
     
-    'calculate Asset Turnover and YOY growth
-    For i = 0 To 3
-        'asset turnover = revenue/total assets
-        dblAssetTurnover(i) = dblRevenue(i) / dblAssets(i)
-        
-        'if divide by 0
-        If Err = ERROR_CODE_OVERFLOW Then
-            dblAssetTurnover(i) = 0
+    'calculate profit margin, Asset Turnover, and leverage
+    For i = 0 To (iYearsAvailableIncome - 1)
+        dblProfitMargin(i) = dblNetIncome(i) / dblRevenue(i)
+        If Err Then
+            dblProfitMargin(i) = 0
+            Err.Clear
         End If
-        
-        'convert to string to format and dispaly in comment box
+        'convert to string to format and display in comment box
+        strProfitMargin(i) = Format(dblProfitMargin(i), "0.0%")
+    
+        dblAssetTurnover(i) = dblRevenue(i) / dblAssets(i)
+        If Err Then
+            dblAssetTurnover(i) = 0
+            Err.Clear
+        End If
+        'convert to string to format and display in comment box
         strAssetTurnover(i) = Format(dblAssetTurnover(i), "0.00")
+        
+        dblLeverage(i) = dblAssets(i) / dblEquity(i)
+        If Err Then
+            dblLeverage(i) = 0
+            Err.Clear
+        End If
+        'convert to string to format and display in comment box
+        strLeverage(i) = Format(dblLeverage(i), "0.00")
     Next i
     
-    For i = 0 To 2
-        'calculated YOY growth
-        dblAssetTurnoverYOYGrowth(i) = CalculateYOYGrowth(dblAssetTurnover(i), dblAssetTurnover(i + 1))
-        
+    'calculated YOY growth
+    For i = 0 To (iYearsAvailableIncome - 2)
+        dblNetIncomeYOYGrowth(i) = CalculateYOYGrowth(dblNetIncome(i), dblNetIncome(i + 1))
         'convert to string to format display in comment box
-        strAssetTurnoverYOYGrowth(i) = Format(dblAssetTurnoverYOYGrowth(i), "0.0%")
-    Next i
-    
-    'calculate equity YOY growth
-    For i = 0 To 2
-        dblEquityYOYGrowth(i) = CalculateYOYGrowth(dblEquity(i), dblEquity(i + 1))
+        strNetIncomeYOYGrowth(i) = Format(dblNetIncomeYOYGrowth(i), "0.0%")
         
+        dblEquityYOYGrowth(i) = CalculateYOYGrowth(dblEquity(i), dblEquity(i + 1))
         'convert to string to format display in comment box
         strEquityYOYGrowth(i) = Format(dblEquityYOYGrowth(i), "0.0%")
+    
+        dblAssetTurnoverYOYGrowth(i) = CalculateYOYGrowth(dblAssetTurnover(i), dblAssetTurnover(i + 1))
+        'convert to string to format display in comment box
+        strAssetTurnoverYOYGrowth(i) = Format(dblAssetTurnoverYOYGrowth(i), "0.0%")
+        
+        dblProfitMarginYOYGrowth(i) = CalculateYOYGrowth(dblProfitMargin(i), dblProfitMargin(i + 1))
+        'convert to string to format display in comment box
+        strProfitMarginYOYGrowth(i) = Format(dblProfitMarginYOYGrowth(i), "0.0%")
+        
+        dblLeverageYOYGrowth(i) = CalculateYOYGrowth(dblLeverage(i), dblLeverage(i + 1))
+        'convert to string to format display in comment box
+        strLeverageYOYGrowth(i) = Format(dblLeverageYOYGrowth(i), "0.0%")
     Next i
     
     With Range("ROE")
         .AddComment
         .Comment.Visible = False
         .Comment.Text Text:="ROE = Net Income / Shareholder's Equity" & Chr(10) & _
-                "Profit Margin x Assset Turnover x Leverage = ROE" & Chr(10) & _
-                "Net Income/Sales x Sales/Assets x Assets/Equity = Net Income/Equity = ROE" & Chr(10) & _
                 "" & Chr(10) & _
-                "YOY Asset Turnover              " & strAssetTurnover(0) & "     " & strAssetTurnover(1) & "     " & strAssetTurnover(2) & "     " & strAssetTurnover(3) & Chr(10) & _
-                "YOY Asset Turnover Growth   " & strAssetTurnoverYOYGrowth(0) & "     " & strAssetTurnoverYOYGrowth(1) & "     " & strAssetTurnoverYOYGrowth(2) & "" & Chr(10) & _
+                "YOY Net Income              " & dblNetIncome(0) & "     " & dblNetIncome(1) & "     " & dblNetIncome(2) & "     " & dblNetIncome(3) & Chr(10) & _
+                "YOY Net Income Growth   " & strNetIncomeYOYGrowth(0) & "     " & strNetIncomeYOYGrowth(1) & "     " & strNetIncomeYOYGrowth(2) & Chr(10) & _
                 "" & Chr(10) & _
                 "YOY Equity              " & dblEquity(0) & "     " & dblEquity(1) & "     " & dblEquity(2) & "     " & dblEquity(3) & Chr(10) & _
-                "YOY Equity Growth   " & strEquityYOYGrowth(0) & "     " & strEquityYOYGrowth(1) & "     " & strEquityYOYGrowth(2) & ""
+                "YOY Equity Growth   " & strEquityYOYGrowth(0) & "     " & strEquityYOYGrowth(1) & "     " & strEquityYOYGrowth(2) & Chr(10) & _
+                "" & Chr(10) & _
+                "ROE = Net Income/Sales x Sales/Assets x Assets/Equity" & Chr(10) & _
+                "       = Profit Margin x Assset Turnover x Leverage" & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Profit Margin              " & strProfitMargin(0) & "     " & strProfitMargin(1) & "     " & strProfitMargin(2) & "     " & strProfitMargin(3) & Chr(10) & _
+                "YOY Profit Margin Growth   " & strProfitMarginYOYGrowth(0) & "     " & strProfitMarginYOYGrowth(1) & "     " & strProfitMarginYOYGrowth(2) & "" & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Asset Turnover              " & strAssetTurnover(0) & "       " & strAssetTurnover(1) & "       " & strAssetTurnover(2) & "       " & strAssetTurnover(3) & Chr(10) & _
+                "YOY Asset Turnover Growth   " & strAssetTurnoverYOYGrowth(0) & "     " & strAssetTurnoverYOYGrowth(1) & "     " & strAssetTurnoverYOYGrowth(2) & "" & Chr(10) & _
+                "" & Chr(10) & _
+                "YOY Leverage              " & strLeverage(0) & "       " & strLeverage(1) & "       " & strLeverage(2) & "       " & strLeverage(3) & Chr(10) & _
+                "YOY Leverage Growth   " & strLeverageYOYGrowth(0) & "     " & strLeverageYOYGrowth(1) & "     " & strLeverageYOYGrowth(2) & ""
         .Comment.Shape.TextFrame.AutoSize = True
     End With
 
