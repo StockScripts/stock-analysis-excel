@@ -1,4 +1,4 @@
-## What is it?
+## Stock Analysis
 The Stock Analysis Excel Add-In works with Excel to allow the user to search for potential stocks to invest in and quickly analyze them.  The purpose of this Add-In is to help the user select high performing stocks in order create a robust portfolio.
 
 The program supports two functions:  
