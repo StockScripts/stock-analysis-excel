@@ -3,6 +3,9 @@ Option Explicit
 
 Private Const REVENUE_GROWTH_MIN = 0.1  'revenue must grow by 10% each year
 Private ResultRevenue As Result
+Private Const REVENUE_SCORE_MAX = 3
+Private Const REVENUE_SCORE_WEIGHT = 3
+Private ScoreRevenue As Integer
     
 '===============================================================
 ' Procedure:    EvaluateRevenue
@@ -115,9 +118,8 @@ End Sub
 ' Procedure:    EvaluateRevenueYOYGrowth
 '
 ' Description:  Display YOY growth information.
-'               if revenue decreases -> red font
-'               if revenue growth is < REVENUE_GROWTH_MIN -> orange font
-'               else if revenue growth >= REVENUE_GROWTH_MIN -> green font
+'               if revenue growth is < REVENUE_GROWTH_MIN -> fail
+'               else if revenue growth >= REVENUE_GROWTH_MIN -> pass
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -131,6 +133,9 @@ End Sub
 '
 ' Rev History:  16Sept14 by Janice Laset Parkerson
 '               - Initial Version
+'
+'               10Dec15 by Janice Laset Parkerson
+'               - add scoring
 '===============================================================
 Function EvaluateRevenueYOYGrowth(YOYGrowth As Range, YOY() As Double)
     
@@ -139,21 +144,24 @@ Function EvaluateRevenueYOYGrowth(YOYGrowth As Range, YOY() As Double)
     'initialize to PASS
     ResultRevenue = PASS
     
+    ScoreRevenue = 0
+    
     For i = 0 To (iYearsAvailableIncome - 2)
         YOYGrowth.Offset(0, i + 1).Select
-        If YOY(i) < 0 Then                                  'if revenue decreases
+        If YOY(i) < REVENUE_GROWTH_MIN Then                 'if revenue growth is less than required
             Selection.Font.ColorIndex = FONT_COLOR_RED
-            ResultRevenue = FAIL
-        ElseIf YOY(i) < REVENUE_GROWTH_MIN Then             'if revenue growth is less than required
-            Selection.Font.ColorIndex = FONT_COLOR_ORANGE
             ResultRevenue = FAIL
         Else
             Selection.Font.ColorIndex = FONT_COLOR_GREEN    'if revenue growth is greater than required
+            ScoreRevenue = ScoreRevenue + (REVENUE_SCORE_MAX - i)
         End If
         YOYGrowth.Offset(0, i + 1) = YOY(i)
     Next i
+        
+    ScoreRevenue = ScoreRevenue * REVENUE_SCORE_WEIGHT
 
     CheckRevenuePassFail
+    RevenueScore
     
 End Function
 
@@ -183,5 +191,27 @@ Sub CheckRevenuePassFail()
         Range("RevenueCheck") = X_MARK
         Range("RevenueCheck").Font.ColorIndex = FONT_COLOR_RED
     End If
+
+End Sub
+
+'===============================================================
+' Procedure:    RevenueScore
+'
+' Description:  Calculate score for revenue
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:  10Dec15 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub RevenueScore()
+
+    Range("RevenueScore") = ScoreRevenue
 
 End Sub

@@ -3,6 +3,9 @@ Option Explicit
 
 Private Const EPS_GROWTH_MIN = 0.1  'EPS must grow by 10% each year
 Private ResultEarnings As Result
+Private Const EARNINGS_SCORE_MAX = 1
+Private Const EARNINGS_SCORE_WEIGHT = 2
+Private ScoreEarnings As Integer
 
 '===============================================================
 ' Procedure:    EvaluateEPS
@@ -34,6 +37,7 @@ Sub EvaluateEPS()
         If IsNumeric(vEPS(i)) Then
             If vEPS(i) > 0 Then
                 Range("Earnings").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_GREEN
+                ScoreEarnings = ScoreEarnings + 1
             Else
                 Range("Earnings").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_RED
                 ResultEarnings = FAIL
@@ -207,9 +211,8 @@ End Sub
 ' Procedure:    EvaluateEPSYOYGrowth
 '
 ' Description:  Display YOY growth information.
-'               if EPS decreases -> red font -> fail
-'               if EPS growth is < EPS_GROWTH_MIN -> orange font -> fail
-'               else if EPS growth >= EPS_GROWTH_MIN -> green font -> pass
+'               if EPS < 0 or decreasing or growth is < EPS_GROWTH_MIN -> fail
+'               else if EPS growth >= EPS_GROWTH_MIN -> pass
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -230,13 +233,10 @@ Function EvaluateEPSYOYGrowth(YOYGrowth As Range, YOY() As Double)
     
     For i = 0 To (iYearsAvailableIncome - 2)
     YOYGrowth.Offset(0, i + 1).Select
-    If vEPS(i) < 0 Or YOY(i) < 0 Then                   'if EPS is negative or decreases
+    If vEPS(i) < 0 Or YOY(i) < 0 Or YOY(i) < EPS_GROWTH_MIN Then   'if EPS is negative or decreases or less than required
         Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultEarnings = FAIL
-    ElseIf YOY(i) < EPS_GROWTH_MIN Then                 'if EPS growth is less than required
-        Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-        ResultEarnings = FAIL
-    Else                                                'if EPS growth is greater than required
+    Else                                                            'if EPS growth is greater than required
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
     End If
     YOYGrowth.Offset(0, i + 1) = YOY(i)

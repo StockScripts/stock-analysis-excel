@@ -41,6 +41,8 @@ Sub CreateChecklistStockAnalysis()
     
     DisplayCurrentStatistics
     
+    CalculateScore
+    
 End Sub
 
 '===============================================================
@@ -142,6 +144,7 @@ Sub AssignCellItemsStockAnalysis()
     Range("B4").Name = "RevenueYOYGrowth"
     Range("4:4").Name = "RevenueYOYRow"
     Range("G3:G4").Name = "RevenueCheck"
+    Range("H3:H4").Name = "RevenueScore"
     
     'earnings checklist item
     Range("A5").Name = "ListItemEarnings"
@@ -275,6 +278,7 @@ Sub AssignCellItemsStockAnalysis()
     Range("E42").Name = "CurrentRatioMRQ"
     Range("E43").Name = "FreeCashFlowTTM"
     
+    Range("H39:H40").Name = "TotalScore"
 End Sub
 
 '===============================================================
@@ -328,6 +332,7 @@ Sub FormatCheckListStockAnalysis()
     FormatCheckListRedFlags
     FormatCheckListPrice
     FormatCurrentStats
+    FormatTotalScore
     
 End Sub
 
@@ -379,6 +384,14 @@ Sub FormatCheckListRevenue()
         .Merge
         .Font.Name = "Wingdings 2"
         .Font.Size = 24
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+    End With
+    
+    With Range("RevenueScore")
+        .Merge
+        .Font.Size = 20
+        .Font.ColorIndex = FONT_COLOR_BLUE
         .HorizontalAlignment = xlCenter
         .VerticalAlignment = xlCenter
     End With
@@ -904,4 +917,53 @@ Sub FormatCurrentStats()
     Range("ProfitMarginTTM").Offset(0, 1).NumberFormat = "0.00%"
     Range("ROETTM").Offset(0, 1).NumberFormat = "0.00%"
 
+End Sub
+
+'===============================================================
+' Procedure:    FormatTotalScore
+'
+' Description:  Format cells for total score
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+'Rev History:   10Dec15 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub FormatTotalScore()
+
+    With Range("TotalScore")
+        .Merge
+        .Font.Size = 20
+        .Font.ColorIndex = FONT_COLOR_BLUE
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+    End With
+
+End Sub
+
+'===============================================================
+' Procedure:    CalculateScore
+'
+' Description:  Calculate total score from each category
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+'Rev History:   10Dec15 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+Sub CalculateScore()
+
+    Range("TotalScore").FormulaR1C1 = "=SUM(R[-38]C:R[-2]C)"
 End Sub
