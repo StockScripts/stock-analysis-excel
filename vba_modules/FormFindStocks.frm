@@ -17,10 +17,10 @@ Attribute VB_Exposed = False
 Option Explicit
 
 'Stock Screener Parameters
-Private Const MIN_PRICE = 2
+Private Const MIN_PRICE = 5
 Private Const AVG_VOLUME = 20000
 Private Const CURRENT_RATIO_MIN = 1.5
-Private Const LT_DEBT_TO_EQUITY_MAX = 40
+Private Const TOTAL_DEBT_TO_EQUITY_MAX = 40
 Private Const ROE_MIN = 10
 
 'Stock Screener Size Parameters
@@ -29,10 +29,12 @@ Private Const SMALL_CAP_MAX = 2000000000
 Private Const MID_CAP_MIN = 2000000000
 Private Const MID_CAP_MAX = 10000000000#
 Private Const LARGE_CAP_MIN = 10000000000#
+Private Const LARGE_CAP_MAX = 100000000000#
 
 Private OptionSmallCap As Boolean
 Private OptionMidCap As Boolean
 Private OptionLargeCap As Boolean
+Private OptionAll As Boolean
 
 '===============================================================
 ' Procedure:    ButtonEnter_Click
@@ -56,32 +58,38 @@ Private OptionLargeCap As Boolean
 Public Sub ButtonEnter_Click()
 
     Dim strWebsite As String
-    
-    If OptionSmallCap Then
-        strWebsite = "http://www.google.com/finance/stockscreener#" & _
-                    "c0=MarketCap&min0=" & SMALL_CAP_MIN & "&max0=" & SMALL_CAP_MAX & "&" & _
-                    "c1=QuoteLast&min1=" & MIN_PRICE & "&" & _
-                    "c2=AverageVolume&min2=" & AVG_VOLUME & "&" & _
-                    "c3=CurrentRatioYear&min3=" & CURRENT_RATIO_MIN & "&" & _
-                    "c4=LTDebtToEquityYear&min4=0&max4=" & LT_DEBT_TO_EQUITY_MAX & "&" & _
-                    "c5=ReturnOnEquityYear&min5=" & ROE_MIN & ""
-         
-    ElseIf OptionMidCap Then
+             
+    If OptionMidCap Then
         strWebsite = "http://www.google.com/finance/stockscreener#" & _
                     "c0=MarketCap&min0=" & MID_CAP_MIN & "&max0=" & MID_CAP_MAX & "&" & _
                     "c1=QuoteLast&min1=" & MIN_PRICE & "&" & _
                     "c2=AverageVolume&min2=" & AVG_VOLUME & "&" & _
                     "c3=CurrentRatioYear&min3=" & CURRENT_RATIO_MIN & "&" & _
-                    "c4=LTDebtToEquityYear&min4=0&max4=" & LT_DEBT_TO_EQUITY_MAX & "&" & _
+                    "c4=LTDebtToEquityYear&min4=0&max4=" & TOTAL_DEBT_TO_EQUITY_MAX & "&" & _
                     "c5=ReturnOnEquityYear&min5=" & ROE_MIN & ""
-    Else
+    ElseIf OptionLargeCap Then
         strWebsite = "http://www.google.com/finance/stockscreener#" & _
-                    "c0=MarketCap&min0=" & LARGE_CAP_MIN & "&" & _
+                    "c0=MarketCap&min0=" & LARGE_CAP_MIN & "&max0=" & LARGE_CAP_MAX & "&" & _
                     "c1=QuoteLast&min1=" & MIN_PRICE & "&" & _
                     "c2=AverageVolume&min2=" & AVG_VOLUME & "&" & _
                     "c3=CurrentRatioYear&min3=" & CURRENT_RATIO_MIN & "&" & _
-                    "c4=LTDebtToEquityYear&min4=0&max4=" & LT_DEBT_TO_EQUITY_MAX & "&" & _
+                    "c4=TotalDebtToEquityYear&min4=0&max4=" & TOTAL_DEBT_TO_EQUITY_MAX & "&" & _
                     "c5=ReturnOnEquityYear&min5=" & ROE_MIN & ""
+    ElseIf OptionSmallCap Then
+        strWebsite = "http://www.google.com/finance/stockscreener#" & _
+                    "c0=MarketCap&min0=" & SMALL_CAP_MIN & "&max0=" & SMALL_CAP_MAX & "&" & _
+                    "c1=QuoteLast&min1=" & MIN_PRICE & "&" & _
+                    "c2=AverageVolume&min2=" & AVG_VOLUME & "&" & _
+                    "c3=CurrentRatioYear&min3=" & CURRENT_RATIO_MIN & "&" & _
+                    "c4=LTDebtToEquityYear&min4=0&max4=" & TOTAL_DEBT_TO_EQUITY_MAX & "&" & _
+                    "c5=ReturnOnEquityYear&min5=" & ROE_MIN & ""
+    Else  'default to small cap if user does not change selection (small cap selected by default)
+        strWebsite = "http://www.google.com/finance/stockscreener#" & _
+                    "c0=QuoteLast&min0=" & MIN_PRICE & "&" & _
+                    "c1=AverageVolume&min1=" & AVG_VOLUME & "&" & _
+                    "c2=CurrentRatioYear&min2=" & CURRENT_RATIO_MIN & "&" & _
+                    "c3=LTDebtToEquityYear&min3=0&max3=" & TOTAL_DEBT_TO_EQUITY_MAX & "&" & _
+                    "c4=ReturnOnEquityYear&min4=" & ROE_MIN & ""
     End If
                     
     Unload FormFindStocks
@@ -109,7 +117,7 @@ End Sub
 '===============================================================
 Public Sub ButtonCancel_Click()
 
-    Unload FindStocksForm
+    Unload FormFindStocks
     
 End Sub
 
@@ -135,6 +143,7 @@ Public Sub OptionButtonSmallCap_Click()
     OptionSmallCap = True
     OptionMidCap = False
     OptionLargeCap = False
+    OptionAll = False
     
 End Sub
 
@@ -160,6 +169,7 @@ Public Sub OptionButtonMidCap_Click()
     OptionSmallCap = False
     OptionMidCap = True
     OptionLargeCap = False
+    OptionAll = False
     
 End Sub
 
@@ -185,5 +195,14 @@ Public Sub OptionButtonLargeCap_Click()
     OptionSmallCap = False
     OptionMidCap = False
     OptionLargeCap = True
+    OptionAll = False
     
+End Sub
+
+Private Sub OptionButtonAll_Click()
+
+    OptionSmallCap = False
+    OptionMidCap = False
+    OptionLargeCap = False
+    OptionAll = True
 End Sub
