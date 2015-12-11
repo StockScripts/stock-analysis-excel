@@ -3,8 +3,8 @@ Option Explicit
 
 Private Const EPS_GROWTH_MIN = 0.1  'EPS must grow by 10% each year
 Private ResultEarnings As Result
-Private Const EARNINGS_SCORE_MAX = 1
-Private Const EARNINGS_SCORE_WEIGHT = 2
+Private Const EARNINGS_SCORE_MAX = 4
+Private Const EARNINGS_SCORE_WEIGHT = 9
 Private ScoreEarnings As Integer
 
 '===============================================================
@@ -31,13 +31,14 @@ Sub EvaluateEPS()
     Dim i As Integer
     
     ResultEarnings = PASS
+    ScoreEarnings = 0
     
 '   populate EPS information
     For i = 0 To (iYearsAvailableIncome - 1)
         If IsNumeric(vEPS(i)) Then
             If vEPS(i) > 0 Then
                 Range("Earnings").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_GREEN
-                ScoreEarnings = ScoreEarnings + 1
+                ScoreEarnings = ScoreEarnings + (EARNINGS_SCORE_MAX - i)
             Else
                 Range("Earnings").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_RED
                 ResultEarnings = FAIL
@@ -238,11 +239,14 @@ Function EvaluateEPSYOYGrowth(YOYGrowth As Range, YOY() As Double)
         ResultEarnings = FAIL
     Else                                                            'if EPS growth is greater than required
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        ScoreEarnings = ScoreEarnings + (EARNINGS_SCORE_MAX - i)
     End If
     YOYGrowth.Offset(0, i + 1) = YOY(i)
     Next i
     
+    ScoreEarnings = ScoreEarnings * EARNINGS_SCORE_WEIGHT
     CheckEarningsPassFail
+    EarningsScore
 
 End Function
 
@@ -272,6 +276,29 @@ Sub CheckEarningsPassFail()
         Range("EarningsCheck") = X_MARK
         Range("EarningsCheck").Font.ColorIndex = FONT_COLOR_RED
     End If
+
+End Sub
+
+'===============================================================
+' Procedure:    EarningsScore
+'
+' Description:  Calculate score for earnings
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:  10Dec15 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+
+Sub EarningsScore()
+
+    Range("EarningsScore") = ScoreEarnings
 
 End Sub
 

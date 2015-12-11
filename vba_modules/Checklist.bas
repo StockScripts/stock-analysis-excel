@@ -154,6 +154,7 @@ Sub AssignCellItemsStockAnalysis()
     Range("B7").Name = "EarningsYOYGrowth"
     Range("7:7").Name = "EarningsYOYRow"
     Range("G6:G7").Name = "EarningsCheck"
+    Range("H6:H7").Name = "EarningsScore"
     
     'profit checklist item
     Range("A8").Name = "ListItemNetMargin"
@@ -444,6 +445,14 @@ Sub FormatCheckListEarnings()
         .Merge
         .Font.Name = "Wingdings 2"
         .Font.Size = 24
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+    End With
+    
+    With Range("EarningsScore")
+        .Merge
+        .Font.Size = 20
+        .Font.ColorIndex = FONT_COLOR_BLUE
         .HorizontalAlignment = xlCenter
         .VerticalAlignment = xlCenter
     End With
