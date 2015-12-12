@@ -4,6 +4,9 @@ Option Explicit
 Private dblROE(0 To 4) As Double
 Private ResultGrowth As Result
 Private Const ROE_MIN = 0.1
+Private Const ROE_SCORE_MAX = 4
+Private Const ROE_SCORE_WEIGHT = 6
+Private ScoreROE As Integer
 
 '===============================================================
 ' Procedure:    EvaluateROE
@@ -34,6 +37,8 @@ Sub EvaluateROE()
     
     ResultGrowth = PASS
     
+    ScoreROE = 0
+    
     DisplayROEInfo
         
     On Error Resume Next
@@ -47,8 +52,9 @@ Sub EvaluateROE()
         Selection.Value = STR_NO_DATA
         Err.Clear
     Else
-         If dblROE(0) >= ROE_MIN Then
+        If dblROE(0) >= ROE_MIN Then
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreROE = ScoreROE + (ROE_SCORE_MAX - i)
         Else
             Selection.Font.ColorIndex = FONT_COLOR_RED
             ResultGrowth = FAIL
@@ -66,6 +72,7 @@ Sub EvaluateROE()
         Else
              If dblROE(i) >= ROE_MIN Then
                 Selection.Font.ColorIndex = FONT_COLOR_GREEN
+                ScoreROE = ScoreROE + (ROE_SCORE_MAX - i)
             Else
                 Selection.Font.ColorIndex = FONT_COLOR_ORANGE
                 ResultGrowth = FAIL
@@ -256,7 +263,7 @@ Sub CalculateROEYOYGrowth()
         dblYOYGrowth(i) = CalculateYOYGrowth(dblROE(i), dblROE(i + 1))
     Next i
     
-    Call EvaluateROEYOYGrowth(Range("ROEYOYGrowth"), dblYOYGrowth(0), dblYOYGrowth(1), dblYOYGrowth(2))
+    Call EvaluateROEYOYGrowth(Range("ROEYOYGrowth"), dblYOYGrowth)
     
 End Sub
 
@@ -264,8 +271,10 @@ End Sub
 ' Procedure:    EvaluateROEYOYGrowth
 '
 ' Description:  Display YOY growth information.
-'               if ROE is less than required value and decreased from previous year -> red font
-'               else if ROE decreased from previous year -> orange font
+'               if ROE is less than required for most recent year -> fail
+'               else -> pass
+'
+'               if ROE is less than required for previous years or has decreased -> warning
 '               else ROE is stable or increased from previous year -> green font
 '
 ' Author:       Janice Laset Parkerson
@@ -273,57 +282,52 @@ End Sub
 ' Notes:        N/A
 '
 ' Parameters:   YOYGrowth As Range -> first cell of net margin YOY growth
-'               YOY1, YOY2, YOY3 -> YOY growth values
-'                                   (YOY1 is most recent year)
+'               YOY array -> YOY growth values
+'                            YOY(0) is most recent year
 '
 ' Returns:      N/A
 '
 ' Rev History:  18Sept14 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Function EvaluateROEYOYGrowth(YOYGrowth As Range, YOY1, YOY2, YOY3)
+Function EvaluateROEYOYGrowth(YOYGrowth As Range, YOY() As Double)
     
-    YOYGrowth.Offset(0, 3).Select
-    If dblROE(2) < ROE_MIN And YOY3 < 0 Then            'if ROE is less than required and decreasing
+    Dim i As Integer
+    
+    YOYGrowth.Offset(0, 1).Select
+    If dblROE(0) < ROE_MIN Then                         'if ROE is less than required
         Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultGrowth = FAIL
-    ElseIf YOY3 < 0 Then                                'if ROE is decreasing
+    ElseIf YOY(0) < 0 Then                              'if ROE is decreasing
         Selection.Font.ColorIndex = FONT_COLOR_ORANGE
     Else                                                'ROE is stable or increasing
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        ScoreROE = ScoreROE + (ROE_SCORE_MAX - i)
+        
     End If
-    YOYGrowth.Offset(0, 3) = YOY3
+    Selection.Value = YOY(0)
+        
+    For i = 1 To (iYearsAvailableIncome - 2)
+        YOYGrowth.Offset(0, i + 1).Select
+        If dblROE(i) < ROE_MIN Or YOY(i) < 0 Then           'if ROE is less than required or decreasing
+            Selection.Font.ColorIndex = FONT_COLOR_ORANGE
+        Else                                                'ROE is stable or increasing
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreROE = ScoreROE + (ROE_SCORE_MAX - i)
+        End If
+        Selection.Value = YOY(i)
+    Next i
     
-    YOYGrowth.Offset(0, 2).Select
-    If dblROE(1) < ROE_MIN And YOY2 < 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_RED
-        ResultGrowth = FAIL
-    ElseIf YOY2 < 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 2) = YOY2
-    
-    YOYGrowth.Offset(0, 1).Select
-    If dblROE(0) < ROE_MIN And YOY1 < 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_RED
-        ResultGrowth = FAIL
-    ElseIf YOY1 < 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 1) = YOY1
-    
-    CheckGrowthPassFail
+    ScoreROE = ScoreROE * ROE_SCORE_WEIGHT
+    CheckROEPassFail
+    ROEScore
     
 End Function
 
 '===============================================================
-' Procedure:    CheckGrowthPassFail
+' Procedure:    CheckROEPassFail
 '
-' Description:  Display check or x mark if the profits
+' Description:  Display check or x mark if the ROE
 '               pass or fail the criteria
 '
 ' Author:       Janice Laset Parkerson
@@ -337,7 +341,7 @@ End Function
 ' Rev History:  29Sept14 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Sub CheckGrowthPassFail()
+Sub CheckROEPassFail()
 
     If ResultGrowth = PASS Then
         Range("ROECheck") = CHECK_MARK
@@ -347,4 +351,27 @@ Sub CheckGrowthPassFail()
         Range("ROECheck").Font.ColorIndex = FONT_COLOR_RED
     End If
     
+End Sub
+
+'===============================================================
+' Procedure:    ROEScore
+'
+' Description:  Calculate score for ROE
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:  10Dec15 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+
+Sub ROEScore()
+
+    Range("ROEScore") = ScoreROE
+
 End Sub

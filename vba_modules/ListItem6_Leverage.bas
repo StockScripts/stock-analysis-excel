@@ -7,6 +7,9 @@ Private dblDebtToEquity(0 To 4) As Double
 Private Const DEBT_TO_EQUITY_MAX = 0.4
 Private Const LEVERAGE_RATIO_MAX = 2
 Private ResultLeverage As Result
+Private Const LEVERAGE_SCORE_MAX = 4
+Private Const LEVERAGE_SCORE_WEIGHT = 3
+Private ScoreLeverage As Integer
 
 '===============================================================
 ' Procedure:    EvaluateFinancialLeverage
@@ -28,6 +31,8 @@ Private ResultLeverage As Result
 Sub EvaluateFinancialLeverage()
 
     ResultLeverage = PASS
+    
+    ScoreLeverage = 0
     
     EvaluateLeverageRatio
     EvaluateDebtToEquity
@@ -149,13 +154,13 @@ End Sub
 '
 ' Description:  Display leverage ratio information.
 '               Call procedure to display YOY growth information
-'               if leverage ratio is less than max -> green font
-'               else -> red font
+'               if recent year leverage ratio is less than max -> pass
+'               else -> fail
+'
+'               if previous years leverage ratio is less than max -> pass
+'               else -> warning
 '
 '               catch divide by 0 errors
-'               ErrorNum serves as markers to indicate which
-'               year data generates the error
-'               -> set value to 0 if error
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -170,55 +175,49 @@ End Sub
 '===============================================================
 Sub EvaluateLeverageRatio()
 
-    Dim ErrorNum As Integer
     Dim i As Integer
     
-    On Error GoTo ErrorHandler
+    On Error Resume Next
     
     'financial leverage = assets / equity = (equity + liabilities) / equity
     '                   = 1 + (liabilities/equity)
-    ErrorNum = 0
+    Range("LeverageRatio").Offset(0, 1).Select
     dblLeverageRatio(0) = dblLiabilities(0) / dblEquity(0)
-    If dblLeverageRatio(0) <= LEVERAGE_RATIO_MAX Then           'if financial leverage is less than max
-        Range("LeverageRatio").Offset(0, 1).Font.ColorIndex = FONT_COLOR_GREEN
-    Else                                                            'if financial leverage is greater than max
-        Range("LeverageRatio").Offset(0, 1).Font.ColorIndex = FONT_COLOR_RED
-        ResultLeverage = FAIL
+    
+    If Err Then
+        Selection.HorizontalAlignment = xlCenter
+        Selection.Value = STR_NO_DATA
+        Err.Clear
+    Else
+        If dblLeverageRatio(0) <= LEVERAGE_RATIO_MAX Then       'if financial leverage is less than max
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreLeverage = ScoreLeverage + (LEVERAGE_SCORE_MAX - i)
+        Else                                                    'if financial leverage is greater than max
+            Selection.Font.ColorIndex = FONT_COLOR_RED
+            ResultLeverage = FAIL
+        End If
+        Selection.Value = dblLeverageRatio(0)
     End If
-    Range("LeverageRatio").Offset(0, 1) = dblLeverageRatio(0)
     
     For i = 1 To 3
-        ErrorNum = i
         dblLeverageRatio(i) = dblLiabilities(i) / dblEquity(i)
-        If dblLeverageRatio(i) <= LEVERAGE_RATIO_MAX Then
-            Range("LeverageRatio").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_GREEN
+        Range("LeverageRatio").Offset(0, i + 1).Select
+        If Err Then
+            Selection.HorizontalAlignment = xlCenter
+            Selection.Value = STR_NO_DATA
+            Err.Clear
         Else
-            Range("LeverageRatio").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_ORANGE     'warning for past years
-        End If                                                                              'only recent year should be looked at
-        Range("LeverageRatio").Offset(0, i + 1) = dblLeverageRatio(i)
+            If dblLeverageRatio(i) <= LEVERAGE_RATIO_MAX Then
+                Selection.Font.ColorIndex = FONT_COLOR_GREEN
+                ScoreLeverage = ScoreLeverage + (LEVERAGE_SCORE_MAX - i)
+            Else
+               Selection.Font.ColorIndex = FONT_COLOR_ORANGE     'warning for past years
+            End If                                                                              'only recent year should be looked at
+            Selection.Value = dblLeverageRatio(i)
+        End If
     Next i
 
     CalculateLeverageRatioYOYGrowth
-    
-    Exit Sub
-    
-ErrorHandler:
-    Select Case ErrorNum
-        Case 0
-            dblLeverageRatio(0) = 0
-            Range("LeverageRatio").Offset(0, 1) = dblLeverageRatio(0)
-        Case 1
-            dblLeverageRatio(1) = 0
-            Range("LeverageRatio").Offset(0, 2) = dblLeverageRatio(1)
-        Case 2
-            dblLeverageRatio(2) = 0
-            Range("LeverageRatio").Offset(0, 3) = dblLeverageRatio(2)
-        Case 3
-            dblLeverageRatio(3) = 0
-            Range("LeverageRatio").Offset(0, 4) = dblLeverageRatio(3)
-   End Select
-   
-   CalculateLeverageRatioYOYGrowth
 
 End Sub
 
@@ -251,7 +250,7 @@ Sub CalculateLeverageRatioYOYGrowth()
         dblYOYGrowth(i) = CalculateYOYGrowth(dblLeverageRatio(i), dblLeverageRatio(i + 1))
     Next i
     
-    Call EvaluateLeverageRatioYOYGrowth(Range("LeverageRatioYOYGrowth"), dblYOYGrowth(0), dblYOYGrowth(1), dblYOYGrowth(2))
+    Call EvaluateLeverageRatioYOYGrowth(Range("LeverageRatioYOYGrowth"), dblYOYGrowth)
     
 End Sub
 
@@ -260,54 +259,52 @@ End Sub
 '
 ' Description:  Display YOY growth information.
 '               for the most recent year
-'                   if leverage ratio is greater than max and increasing -> red font
-'                   else if leverage ratio is increasing -> orange font
-'                   else leverage ratio is decreasing -> green font
+'                   if leverage ratio is greater than max -> fail
+'                   else if leverage ratio is increasing -> warning
+'                   else leverage ratio is decreasing -> pass
 '               for previous years
-'                   if leverage ratio is greater than max or increasing -> orange font
-'                   else leverage ratio is decreasing -> green font
+'                   if leverage ratio is greater than max or increasing -> warning
+'                   else leverage ratio is decreasing -> pass
 '
 ' Author:       Janice Laset Parkerson
 '
 ' Notes:        N/A
 '
 ' Parameters:   YOYGrowth As Range -> first cell of net margin YOY growth
-'               YOY1, YOY2, YOY3 -> YOY growth values
-'                                   (YOY1 is most recent year)
+'               YOY array -> YOY growth values
+'                            YOY(0) is most recent year
 '
 ' Returns:      N/A
 '
 ' Rev History:  13Oct14 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Function EvaluateLeverageRatioYOYGrowth(YOYGrowth As Range, YOY1, YOY2, YOY3)
+Function EvaluateLeverageRatioYOYGrowth(YOYGrowth As Range, YOY() As Double)
     
-    YOYGrowth.Offset(0, 3).Select
-    If dblLeverageRatio(2) > LEVERAGE_RATIO_MAX Or YOY3 > 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 3) = YOY3
-    
-    YOYGrowth.Offset(0, 2).Select
-    If dblLeverageRatio(1) > LEVERAGE_RATIO_MAX Or YOY2 > 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 2) = YOY2
+    Dim i As Integer
     
     YOYGrowth.Offset(0, 1).Select
-    If dblLeverageRatio(0) > LEVERAGE_RATIO_MAX And YOY1 > 0 Then    'if debt to equity is greater than max and increasing
+    If dblLeverageRatio(0) > LEVERAGE_RATIO_MAX Then        'if debt to equity is greater than max
         Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultLeverage = FAIL
-    ElseIf YOY1 > 0 Then                                            'if debt to equity is increasing
+    ElseIf YOY(0) > 0 Then                                  'if debt to equity is increasing
         Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-    Else                                                            'debt to equity is stable or decreasing
+    Else                                                    'debt to equity is stable or decreasing
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        ScoreLeverage = ScoreLeverage + (LEVERAGE_SCORE_MAX - i)
     End If
-    YOYGrowth.Offset(0, 1) = YOY1
+    YOYGrowth.Offset(0, 1) = YOY(0)
+    
+    For i = 1 To (iYearsAvailableIncome - 2)
+        YOYGrowth.Offset(0, i + 1).Select
+        If dblLeverageRatio(i) > LEVERAGE_RATIO_MAX Or YOY(i) > 0 Then
+            Selection.Font.ColorIndex = FONT_COLOR_ORANGE
+        Else
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreLeverage = ScoreLeverage + (LEVERAGE_SCORE_MAX - i)
+        End If
+        Selection.Value = YOY(i)
+    Next i
     
 End Function
 
@@ -316,13 +313,13 @@ End Function
 '
 ' Description:  Display debt to equity information.
 '               Call procedure to display YOY growth information
-'               if debt to equity is less than max -> green font
-'               else -> red font
+'               if recent year debt to equity is less than max -> pass
+'               else -> fail
+'
+'               if previous years debt to equiyt is less than max -> pass
+'               else -> warning
 '
 '               catch divide by 0 errors
-'               ErrorNum serves as markers to indicate which
-'               year data generates the error
-'               -> set growth to 0 if error
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -337,53 +334,40 @@ End Function
 '===============================================================
 Sub EvaluateDebtToEquity()
 
-    Dim ErrorNum As Integer
     Dim i As Integer
     
-    On Error GoTo ErrorHandler
+    On Error Resume Next
     
-    ErrorNum = 0
     dblDebtToEquity(0) = dblTotalDebt(0) / dblEquity(0)
-    If dblDebtToEquity(0) <= LEVERAGE_RATIO_MAX Then       'if financial leverage is less than max
-        Range("DebtToEquity").Offset(0, 1).Font.ColorIndex = FONT_COLOR_GREEN
-    Else                                                            'if financial leverage is greater than max
-        Range("DebtToEquity").Offset(0, 1).Font.ColorIndex = FONT_COLOR_RED
-        ResultLeverage = FAIL
+    Range("DebtToEquity").Offset(0, 1).Select
+    If Err Then
+        Selection.HorizontalAlignment = xlCenter
+        Selection.Value = STR_NO_DATA
+        Err.Clear
+    Else
+        If dblDebtToEquity(0) <= DEBT_TO_EQUITY_MAX Then       'if financial leverage is less than max
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreLeverage = ScoreLeverage + (LEVERAGE_SCORE_MAX - i)
+        Else                                                   'if financial leverage is greater than max
+            Selection.Font.ColorIndex = FONT_COLOR_RED
+            ResultLeverage = FAIL
+        End If
+        Selection.Value = dblDebtToEquity(0)
     End If
-    Range("DebtToEquity").Offset(0, 1) = dblDebtToEquity(0)
     
     For i = 1 To 3
-        ErrorNum = i
         dblDebtToEquity(i) = dblTotalDebt(i) / dblEquity(i)
+        Range("DebtToEquity").Offset(0, i + 1).Select
         If dblDebtToEquity(i) <= LEVERAGE_RATIO_MAX Then
-            Range("DebtToEquity").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_GREEN
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreLeverage = ScoreLeverage + (LEVERAGE_SCORE_MAX - i)
         Else
-            Range("DebtToEquity").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_ORANGE     'warning for past years
-        End If                                                                                  'only recent year should be looked at
-        Range("DebtToEquity").Offset(0, i + 1) = dblDebtToEquity(i)
+            Selection.Font.ColorIndex = FONT_COLOR_ORANGE     'warning for past years
+        End If                                                'only recent year should be looked at
+        Selection.Value = dblDebtToEquity(i)
     Next i
 
     CalculateDebtToEquityYOYGrowth
-    
-    Exit Sub
-    
-ErrorHandler:
-    Select Case ErrorNum
-        Case 0
-            dblDebtToEquity(0) = 0
-            Range("DebtToEquity").Offset(0, 1) = dblDebtToEquity(0)
-        Case 1
-            dblDebtToEquity(1) = 0
-            Range("DebtToEquity").Offset(0, 2) = dblDebtToEquity(1)
-        Case 2
-            dblDebtToEquity(2) = 0
-            Range("DebtToEquity").Offset(0, 3) = dblDebtToEquity(2)
-        Case 3
-            dblDebtToEquity(3) = 0
-            Range("DebtToEquity").Offset(0, 4) = dblDebtToEquity(3)
-   End Select
-   
-   CalculateDebtToEquityYOYGrowth
 
 End Sub
 
@@ -417,7 +401,7 @@ Sub CalculateDebtToEquityYOYGrowth()
         dblYOYGrowth(i) = CalculateYOYGrowth(dblDebtToEquity(i), dblDebtToEquity(i + 1))
     Next i
     
-    Call EvaluateDebtToEquityYOYGrowth(Range("DebttoEquityYOYGrowth"), dblYOYGrowth(0), dblYOYGrowth(1), dblYOYGrowth(2))
+    Call EvaluateDebtToEquityYOYGrowth(Range("DebttoEquityYOYGrowth"), dblYOYGrowth)
     
 End Sub
 
@@ -426,54 +410,57 @@ End Sub
 '
 ' Description:  Display YOY growth information.
 '               for the most recent year
-'                   if debt to equity is greater than max and increasing -> red font
-'                   else if debt to equity is increasing -> orange font
-'                   else debt to equity is decreasing -> green font
+'                   if debt to equity is greater than max and increasing -> fail
+'                   else if debt to equity is increasing -> warning
+'                   else debt to equity is decreasing -> pass
 '               for previous years
-'                   if debt to equity is greater than max or increasing -> orange font
-'                   else debt is decreasing -> green font
+'                   if debt to equity is greater than max or increasing -> warning
+'                   else debt is decreasing -> pass
 '
 ' Author:       Janice Laset Parkerson
 '
 ' Notes:        N/A
 '
 ' Parameters:   YOYGrowth As Range -> first cell of net margin YOY growth
-'               YOY1, YOY2, YOY3, YOY4 -> YOY growth values
-'                                         (YOY1 is most recent year)
+'               YOY array -> YOY growth values
+'                            YOY(0) is most recent year
 '
 ' Returns:      N/A
 '
 ' Rev History:  18Sept14 by Janice Laset Parkerson
 '               - Initial Version
 '===============================================================
-Function EvaluateDebtToEquityYOYGrowth(YOYGrowth As Range, YOY1, YOY2, YOY3)
+Function EvaluateDebtToEquityYOYGrowth(YOYGrowth As Range, YOY() As Double)
     
-    YOYGrowth.Offset(0, 3).Select
-    If dblDebtToEquity(2) > DEBT_TO_EQUITY_MAX Or YOY3 > 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 3) = YOY3
-    
-    YOYGrowth.Offset(0, 2).Select
-    If dblDebtToEquity(1) > DEBT_TO_EQUITY_MAX Or YOY2 > 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-    End If
-    YOYGrowth.Offset(0, 2) = YOY2
+    Dim i As Integer
     
     YOYGrowth.Offset(0, 1).Select
-    If dblDebtToEquity(0) > DEBT_TO_EQUITY_MAX And YOY1 > 0 Then    'if debt to equity is greater than max and increasing
+    If dblDebtToEquity(0) > DEBT_TO_EQUITY_MAX Then         'if debt to equity is greater than max
         Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultLeverage = FAIL
-    ElseIf YOY1 > 0 Then                                            'if debt to equity is increasing
+    ElseIf YOY(0) > 0 Then                                  'if debt to equity is increasing
         Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-    Else                                                            'debt to equity is stable or decreasing
+    Else                                                    'debt to equity is stable or decreasing
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        ScoreLeverage = ScoreLeverage + (LEVERAGE_SCORE_MAX - i)
     End If
-    YOYGrowth.Offset(0, 1) = YOY1
+    YOYGrowth.Offset(0, 1) = YOY(0)
+    
+    For i = 1 To (iYearsAvailableIncome - 2)
+        YOYGrowth.Offset(0, i + 1).Select
+        If dblDebtToEquity(i) > DEBT_TO_EQUITY_MAX Or YOY(i) > 0 Then
+            Selection.Font.ColorIndex = FONT_COLOR_ORANGE
+        Else
+            Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreLeverage = ScoreLeverage + (LEVERAGE_SCORE_MAX - i)
+        End If
+        Selection.Value = YOY(i)
+    Next i
+    
+    ScoreLeverage = ScoreLeverage * LEVERAGE_SCORE_WEIGHT
+    
+    CheckLeveragePassFail
+    LeverageScore
     
 End Function
 
@@ -503,6 +490,29 @@ Sub CheckLeveragePassFail()
         Range("LeverageCheck") = X_MARK
         Range("LeverageCheck").Font.ColorIndex = FONT_COLOR_RED
     End If
+
+End Sub
+
+'===============================================================
+' Procedure:    LeverageScore
+'
+' Description:  Calculate score for leverage
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:  10Dec15 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+
+Sub LeverageScore()
+
+    Range("LeverageScore") = ScoreLeverage
 
 End Sub
 

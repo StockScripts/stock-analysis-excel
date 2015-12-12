@@ -8,6 +8,9 @@ Private dblReceivablesToSales(0 To 4) As Double
 Private dblInventoryToSales(0 To 4) As Double
 Private dblSGAToSales(0 To 4) As Double
 Private ResultRedFlags As Result
+Private Const RED_FLAGS_SCORE_MAX = 4
+Private Const RED_FLAGS_SCORE_WEIGHT = 1
+Private ScoreRedFlags As Integer
 
 '===============================================================
 ' Procedure:    EvaluateRedFlags
@@ -28,6 +31,7 @@ Private ResultRedFlags As Result
 Sub EvaluateRedFlags()
 
     ResultRedFlags = PASS
+    ScoreRedFlags = 0
     
     DisplayRedFlagsInfo
     
@@ -37,6 +41,7 @@ Sub EvaluateRedFlags()
     EvaluateDividendPerShare
     
     CheckRedFlagsPassFail
+    RedFlagsScore
 
 End Sub
 
@@ -201,6 +206,7 @@ Sub EvaluateReceivablesToSales()
             ResultRedFlags = FAIL
         Else
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreRedFlags = ScoreRedFlags + (RED_FLAGS_SCORE_MAX - i)
         End If
         Selection.Value = dblReceivablesToSales(0)
     End If
@@ -218,6 +224,7 @@ Sub EvaluateReceivablesToSales()
                 Selection.Font.ColorIndex = FONT_COLOR_ORANGE
             Else
                 Selection.Font.ColorIndex = FONT_COLOR_GREEN
+                ScoreRedFlags = ScoreRedFlags + (RED_FLAGS_SCORE_MAX - i)
             End If
             Selection.Value = dblReceivablesToSales(i)
         End If
@@ -306,6 +313,7 @@ Sub EvaluateInventoryToSales()
             Selection.Font.ColorIndex = FONT_COLOR_RED
         Else
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreRedFlags = ScoreRedFlags + (RED_FLAGS_SCORE_MAX - i)
         End If
         Selection.Value = dblInventoryToSales(0)
     End If
@@ -323,6 +331,7 @@ Sub EvaluateInventoryToSales()
                 Selection.Font.ColorIndex = FONT_COLOR_ORANGE
             Else
                 Selection.Font.ColorIndex = FONT_COLOR_GREEN
+                ScoreRedFlags = ScoreRedFlags + (RED_FLAGS_SCORE_MAX - i)
             End If
             Selection.Value = dblInventoryToSales(i)
         End If
@@ -480,6 +489,7 @@ Function EvaluateRedFlagYOYGrowth(YOYGrowth As Range, YOY() As Double)
             ResultRedFlags = FAIL
         Else
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreRedFlags = ScoreRedFlags + (RED_FLAGS_SCORE_MAX - i)
         End If
         Selection.Value = YOY(i)
     Next i
@@ -586,6 +596,7 @@ Function EvaluateDivPerShareYOYGrowth(YOYGrowth As Range, YOY() As Double)
         ResultRedFlags = FAIL
     Else
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        ScoreRedFlags = ScoreRedFlags + (RED_FLAGS_SCORE_MAX - i)
     End If
     YOYGrowth.Offset(0, 1) = YOY(0)
     
@@ -595,6 +606,7 @@ Function EvaluateDivPerShareYOYGrowth(YOYGrowth As Range, YOY() As Double)
             Selection.Font.ColorIndex = FONT_COLOR_ORANGE
         Else
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreRedFlags = ScoreRedFlags + (RED_FLAGS_SCORE_MAX - i)
         End If
         YOYGrowth.Offset(0, i + 1) = YOY(i)
     Next i
@@ -630,6 +642,27 @@ Sub CheckRedFlagsPassFail()
 
 End Sub
 
+'===============================================================
+' Procedure:    RedFlagsScore
+'
+' Description:  Calculate score for red flags
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:  10Dec15 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+
+Sub RedFlagsScore()
+
+    Range("RedFlagsScore") = ScoreRedFlags
+End Sub
 
 
 

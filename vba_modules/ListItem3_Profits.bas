@@ -3,6 +3,9 @@ Option Explicit
 
 Private dblNetMargin(0 To 4) As Double
 Private ResultProfits As Result
+Private Const PROFITS_SCORE_MAX = 4
+Private Const PROFITS_SCORE_WEIGHT = 6
+Private ScoreProfits As Integer
 
 '===============================================================
 ' Procedure:    EvaluateNetMargin
@@ -33,6 +36,7 @@ Sub EvaluateNetMargin()
     On Error Resume Next
     
     ResultProfits = PASS
+    ScoreProfits = 0
     
     'net margin = net income / revenue
     For i = 0 To (iYearsAvailableIncome - 1)
@@ -45,6 +49,7 @@ Sub EvaluateNetMargin()
         Else
             If dblNetMargin(i) > 0 Then
                 Selection.Font.ColorIndex = FONT_COLOR_GREEN
+                ScoreProfits = ScoreProfits + (PROFITS_SCORE_MAX - i)
             Else
                 Selection.Font.ColorIndex = FONT_COLOR_RED
                 ResultProfits = FAIL
@@ -215,11 +220,14 @@ Function EvaluateNetMarginYOYGrowth(YOYGrowth As Range, YOY() As Double)
             ResultProfits = FAIL
         Else                                        'net margin is stable or increasing
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreProfits = ScoreProfits + (PROFITS_SCORE_MAX - i)
         End If
         YOYGrowth.Offset(0, i + 1) = YOY(i)
     Next i
     
+    ScoreProfits = ScoreProfits * PROFITS_SCORE_WEIGHT
     CheckProfitsPassFail
+    ProfitsScore
     
 End Function
 
@@ -249,5 +257,28 @@ Sub CheckProfitsPassFail()
         Range("ProfitsCheck") = X_MARK
         Range("ProfitsCheck").Font.ColorIndex = FONT_COLOR_RED
     End If
+
+End Sub
+
+'===============================================================
+' Procedure:    ProfitsScore
+'
+' Description:  Calculate score for profits
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:  10Dec15 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+
+Sub ProfitsScore()
+
+    Range("ProfitsScore") = ScoreProfits
 
 End Sub

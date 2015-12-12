@@ -165,6 +165,7 @@ Sub AssignCellItemsStockAnalysis()
     Range("B10").Name = "NetMarginYOYGrowth"
     Range("10:10").Name = "NetMarginYOYRow"
     Range("G9:G10").Name = "ProfitsCheck"
+    Range("H9:H10").Name = "ProfitsScore"
     
     'cash flow checklist item
     Range("A11").Name = "ListItemFreeCashFlow"
@@ -175,6 +176,7 @@ Sub AssignCellItemsStockAnalysis()
     Range("B13").Name = "FreeCashFlowYOYGrowth"
     Range("13:13").Name = "FreeCashFlowYOYRow"
     Range("G12:G13").Name = "FreeCashFlowCheck"
+    Range("H12:H13").Name = "FreeCashFlowScore"
     
     'growth potential checklist item
     Range("A14").Name = "ListItemROE"
@@ -185,6 +187,7 @@ Sub AssignCellItemsStockAnalysis()
     Range("B16").Name = "ROEYOYGrowth"
     Range("16:16").Name = "ROEYOYRow"
     Range("G15:G16").Name = "ROECheck"
+    Range("H15:H16").Name = "ROEScore"
     
     'leverage checklist item
     Range("A17").Name = "ListItemFinancialLeverage"
@@ -202,6 +205,7 @@ Sub AssignCellItemsStockAnalysis()
     Range("21:21").Name = "DebtToEquityYOYRow"
     
     Range("G18:G21").Name = "LeverageCheck"
+    Range("H18:H21").Name = "LeverageScore"
     
     'liquidity checklist item
     Range("A22").Name = "ListItemQuickRatio"
@@ -212,6 +216,7 @@ Sub AssignCellItemsStockAnalysis()
     Range("B24").Name = "QuickRatioYOYGrowth"
     Range("24:24").Name = "QuickRatioYOYRow"
     Range("G23:G24").Name = "LiquidityCheck"
+    Range("H23:H24").Name = "LiquidityScore"
     
     'red flags checklist item
     Range("A25").Name = "ListItemRedFlags"
@@ -239,6 +244,7 @@ Sub AssignCellItemsStockAnalysis()
     Range("33:33").Name = "DividendYOYRow"
     
     Range("G26:G33").Name = "RedFlagsCheck"
+    Range("H26:H33").Name = "RedFlagsScore"
     
     'price checklist item
     Range("A34").Name = "ListItemPrice"
@@ -259,6 +265,7 @@ Sub AssignCellItemsStockAnalysis()
     Range("E37").Name = "Brokers"
     
     Range("G35:G37").Name = "PriceCheck"
+    Range("H35:H37").Name = "PriceScore"
     
     'current statistics
     Range("A38:G38").Name = "CurrentStatsRow"
@@ -510,6 +517,15 @@ Sub FormatCheckListNetMargin()
         .VerticalAlignment = xlCenter
     End With
     
+    With Range("ProfitsScore")
+        .Merge
+        .Font.Size = 20
+        .Font.ColorIndex = FONT_COLOR_BLUE
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        .NumberFormat = 0
+    End With
+    
 End Sub
 
 '===============================================================
@@ -558,6 +574,14 @@ Sub FormatCheckListCashFlow()
         .Merge
         .Font.Name = "Wingdings 2"
         .Font.Size = 24
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+    End With
+    
+    With Range("FreeCashFlowScore")
+        .Merge
+        .Font.Size = 20
+        .Font.ColorIndex = FONT_COLOR_BLUE
         .HorizontalAlignment = xlCenter
         .VerticalAlignment = xlCenter
     End With
@@ -613,6 +637,15 @@ Sub FormatCheckListROE()
         .Font.Size = 24
         .HorizontalAlignment = xlCenter
         .VerticalAlignment = xlCenter
+    End With
+    
+    With Range("ROEScore")
+        .Merge
+        .Font.Size = 20
+        .Font.ColorIndex = FONT_COLOR_BLUE
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        .NumberFormat = 0
     End With
     
 End Sub
@@ -685,6 +718,15 @@ Sub FormatCheckListFinancialLeverage()
         .VerticalAlignment = xlCenter
     End With
     
+    With Range("LeverageScore")
+        .Merge
+        .Font.Size = 20
+        .Font.ColorIndex = FONT_COLOR_BLUE
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        .NumberFormat = 0
+    End With
+    
 End Sub
 
 '===============================================================
@@ -736,6 +778,15 @@ Sub FormatCheckListLiquidity()
         .Font.Size = 24
         .HorizontalAlignment = xlCenter
         .VerticalAlignment = xlCenter
+    End With
+    
+    With Range("LiquidityScore")
+        .Merge
+        .Font.Size = 20
+        .Font.ColorIndex = FONT_COLOR_BLUE
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        .NumberFormat = 0
     End With
     
 End Sub
@@ -838,6 +889,15 @@ Sub FormatCheckListRedFlags()
         .VerticalAlignment = xlCenter
     End With
     
+    With Range("RedFlagsScore")
+        .Merge
+        .Font.Size = 20
+        .Font.ColorIndex = FONT_COLOR_BLUE
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        .NumberFormat = 0
+    End With
+    
 End Sub
 
 '===============================================================
@@ -886,6 +946,15 @@ Sub FormatCheckListPrice()
         .Font.Size = 24
         .HorizontalAlignment = xlCenter
         .VerticalAlignment = xlCenter
+    End With
+    
+    With Range("PriceScore")
+        .Merge
+        .Font.Size = 20
+        .Font.ColorIndex = FONT_COLOR_BLUE
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        .NumberFormat = 0
     End With
     
 End Sub

@@ -2,6 +2,9 @@ Attribute VB_Name = "ListItem4_CashFlow"
 Option Explicit
 
 Private ResultCashFlow As Result
+Private Const CASH_FLOW_SCORE_MAX = 4
+Private Const CASH_FLOW_SCORE_WEIGHT = 6
+Private ScoreCashFlow As Integer
 
 '===============================================================
 ' Procedure:    EvaluateFreeCashFlow
@@ -33,11 +36,13 @@ Sub EvaluateFreeCashFlow()
     Range("FreeCashFlow") = "Free Cash Flow"
     
     ResultCashFlow = PASS
+    ScoreCashFlow = 0
     
 '   populate free cash flow information
     Range("FreeCashFlow").Offset(0, 1).Select
     If dblFreeCashFlow(0) > 0 Then
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        ScoreCashFlow = ScoreCashFlow + (CASH_FLOW_SCORE_MAX - i)
     Else
         Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultCashFlow = FAIL
@@ -48,6 +53,7 @@ Sub EvaluateFreeCashFlow()
         Range("FreeCashFlow").Offset(0, i + 1).Select
         If dblFreeCashFlow(i) > 0 Then
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreCashFlow = ScoreCashFlow + (CASH_FLOW_SCORE_MAX - i)
         Else
             Selection.Font.ColorIndex = FONT_COLOR_ORANGE
         End If
@@ -200,11 +206,15 @@ Function EvaluateFreeCashFlowYOYGrowth(YOYGrowth As Range, YOY() As Double)
             Selection.Font.ColorIndex = FONT_COLOR_ORANGE
         Else
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreCashFlow = ScoreCashFlow + (CASH_FLOW_SCORE_MAX - i)
         End If
         YOYGrowth.Offset(0, i + 1) = YOY(i)
     Next i
     
+    ScoreCashFlow = ScoreCashFlow * CASH_FLOW_SCORE_WEIGHT
+    
     CheckCashFlowPassFail
+    CashFlowScore
     
 End Function
 
@@ -234,5 +244,28 @@ Sub CheckCashFlowPassFail()
         Range("FreeCashflowCheck") = X_MARK
         Range("FreeCashflowCheck").Font.ColorIndex = FONT_COLOR_RED
     End If
+
+End Sub
+
+'===============================================================
+' Procedure:    CashFlowScore
+'
+' Description:  Calculate score for cash flow
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:  10Dec15 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+
+Sub CashFlowScore()
+
+    Range("FreeCashFlowScore") = ScoreCashFlow
 
 End Sub

@@ -5,6 +5,9 @@ Private dblQuickRatio(0 To 4) As Double
 
 Private Const QUICK_RATIO_MIN = 1
 Private ResultLiquidity As Result
+Private Const LIQUIDITY_SCORE_MAX = 4
+Private Const LIQUIDITY_SCORE_WEIGHT = 6
+Private ScoreLiquidity As Integer
 
 '===============================================================
 ' Procedure:    EvaluateQuickRatio
@@ -37,6 +40,8 @@ Sub EvaluateQuickRatio()
 
     ResultLiquidity = PASS
     
+    ScoreLiquidity = 0
+    
     DisplayLiquidityInfo
     
     dblQuickRatio(0) = (dblCurrentAssets(0) - dblInventory(0)) / dblCurrentLiabilities(0)
@@ -48,6 +53,7 @@ Sub EvaluateQuickRatio()
     Else
         If dblQuickRatio(0) >= QUICK_RATIO_MIN Then
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreLiquidity = ScoreLiquidity + (LIQUIDITY_SCORE_MAX - i)
         Else
             Selection.Font.ColorIndex = FONT_COLOR_RED
             ResultLiquidity = FAIL
@@ -65,6 +71,7 @@ Sub EvaluateQuickRatio()
         Else
             If dblQuickRatio(i) >= QUICK_RATIO_MIN Then
                 Selection.Font.ColorIndex = FONT_COLOR_GREEN
+                ScoreLiquidity = ScoreLiquidity + (LIQUIDITY_SCORE_MAX - i)
             Else
                 Selection.Font.ColorIndex = FONT_COLOR_ORANGE
                 ResultLiquidity = FAIL
@@ -212,7 +219,7 @@ End Sub
 '
 ' Notes:        N/A
 '
-' Parameters:   YOYGrowth As Range -> first cell of net margin YOY growth
+' Parameters:   YOYGrowth As Range -> first cell of quick ratio YOY growth
 '               YOY array -> YOY growth values
 '                            YOY(0) is most recent year
 '
@@ -233,6 +240,7 @@ Function EvaluateQuickRatioYOYGrowth(YOYGrowth As Range, YOY() As Double)
         Selection.Font.ColorIndex = FONT_COLOR_ORANGE
     Else
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        ScoreLiquidity = ScoreLiquidity + (LIQUIDITY_SCORE_MAX - i)
     End If
     Selection.Value = YOY(0)
     
@@ -242,11 +250,15 @@ Function EvaluateQuickRatioYOYGrowth(YOYGrowth As Range, YOY() As Double)
             Selection.Font.ColorIndex = FONT_COLOR_ORANGE
         Else
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
+            ScoreLiquidity = ScoreLiquidity + (LIQUIDITY_SCORE_MAX - i)
         End If
         YOYGrowth.Offset(0, i + 1) = YOY(i)
     Next i
     
+    ScoreLiquidity = ScoreLiquidity * LIQUIDITY_SCORE_WEIGHT
+    
     CheckLiquidityPassFail
+    LiquidityScore
     
 End Function
 
@@ -279,4 +291,26 @@ Sub CheckLiquidityPassFail()
 
 End Sub
 
+'===============================================================
+' Procedure:    LiquidityScore
+'
+' Description:  Calculate score for liquidity
+'
+' Author:       Janice Laset Parkerson
+'
+' Notes:        N/A
+'
+' Parameters:   N/A
+'
+' Returns:      N/A
+'
+' Rev History:  10Dec15 by Janice Laset Parkerson
+'               - Initial Version
+'===============================================================
+
+Sub LiquidityScore()
+
+    Range("LiquidityScore") = ScoreLiquidity
+
+End Sub
 

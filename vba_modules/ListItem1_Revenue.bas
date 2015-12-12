@@ -3,8 +3,8 @@ Option Explicit
 
 Private Const REVENUE_GROWTH_MIN = 0.1  'revenue must grow by 10% each year
 Private ResultRevenue As Result
-Private Const REVENUE_SCORE_MAX = 3
-Private Const REVENUE_SCORE_WEIGHT = 3
+Private Const REVENUE_SCORE_MAX = 4
+Private Const REVENUE_SCORE_WEIGHT = 25
 Private ScoreRevenue As Integer
     
 '===============================================================
