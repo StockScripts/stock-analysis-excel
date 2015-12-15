@@ -5,7 +5,8 @@ Private Const REVENUE_GROWTH_MIN = 0.1  'revenue must grow by 10% each year
 Private ResultRevenue As Result
 Private Const REVENUE_SCORE_MAX = 4
 Private Const REVENUE_SCORE_WEIGHT = 25
-Private ScoreRevenue As Integer
+Public ScoreRevenue As Integer
+Public Const MAX_REVENUE_SCORE = 225
     
 '===============================================================
 ' Procedure:    EvaluateRevenue
@@ -120,6 +121,14 @@ End Sub
 ' Description:  Display YOY growth information.
 '               if revenue growth is < REVENUE_GROWTH_MIN -> fail
 '               else if revenue growth >= REVENUE_GROWTH_MIN -> pass
+'               Scoring:
+'               most recent year is > REVENUE_GROWTH_MIN
+'                   add REVENUE_SCORE_MAX
+'                   subtract if revenue decreases
+'               most recent year - 1 > REVENUE_GROWTH_MIN
+'                   add REVENUE_SCORE_MAX - 1
+'                   subtract if revenue decreases
+'               total score = score * REVENUE_SCORE_WEIGHT
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -151,6 +160,9 @@ Function EvaluateRevenueYOYGrowth(YOYGrowth As Range, YOY() As Double)
         If YOY(i) < REVENUE_GROWTH_MIN Then                 'if revenue growth is less than required
             Selection.Font.ColorIndex = FONT_COLOR_RED
             ResultRevenue = FAIL
+            If YOY(i) < 0 Then
+                ScoreRevenue = ScoreRevenue - (REVENUE_SCORE_MAX - i)
+            End If
         Else
             Selection.Font.ColorIndex = FONT_COLOR_GREEN    'if revenue growth is greater than required
             ScoreRevenue = ScoreRevenue + (REVENUE_SCORE_MAX - i)

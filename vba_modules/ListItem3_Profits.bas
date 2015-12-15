@@ -3,9 +3,11 @@ Option Explicit
 
 Private dblNetMargin(0 To 4) As Double
 Private ResultProfits As Result
+Private Const PROFITS_GROWTH_DECREASE_MAX = 0.05
 Private Const PROFITS_SCORE_MAX = 4
 Private Const PROFITS_SCORE_WEIGHT = 6
-Private ScoreProfits As Integer
+Public ScoreProfits As Integer
+Public Const MAX_PROFITS_SCORE = 114
 
 '===============================================================
 ' Procedure:    EvaluateNetMargin
@@ -218,6 +220,9 @@ Function EvaluateNetMarginYOYGrowth(YOYGrowth As Range, YOY() As Double)
         If dblNetMargin(i) < 0 Or YOY(i) < 0 Then     'if net margin is negative or net margin decreases
             Selection.Font.ColorIndex = FONT_COLOR_RED
             ResultProfits = FAIL
+            If YOY(i) < -0.05 Then
+                ScoreProfits = ScoreProfits - (PROFITS_SCORE_MAX - i)
+            End If
         Else                                        'net margin is stable or increasing
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
             ScoreProfits = ScoreProfits + (PROFITS_SCORE_MAX - i)

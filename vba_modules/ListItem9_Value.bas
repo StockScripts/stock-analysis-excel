@@ -3,8 +3,8 @@ Option Explicit
 
 Private ResultPrice As Result
 Private Const PRICE_GROWTH_POTENTIAL_MIN = 0.2
-Private Const PRICE_SCORE_MAX = 20
-Private ScorePrice As Integer
+Public Const PRICE_SCORE_MAX = 20
+Public ScorePrice As Integer
 
 '===============================================================
 ' Procedure:    EvaluatePrice

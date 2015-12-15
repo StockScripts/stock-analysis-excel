@@ -9,7 +9,8 @@ Private Const LEVERAGE_RATIO_MAX = 2
 Private ResultLeverage As Result
 Private Const LEVERAGE_SCORE_MAX = 4
 Private Const LEVERAGE_SCORE_WEIGHT = 3
-Private ScoreLeverage As Integer
+Public ScoreLeverage As Integer
+Public Const MAX_LEVERAGE_SCORE = 114
 
 '===============================================================
 ' Procedure:    EvaluateFinancialLeverage

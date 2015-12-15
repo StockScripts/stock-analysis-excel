@@ -5,7 +5,8 @@ Private Const EPS_GROWTH_MIN = 0.1  'EPS must grow by 10% each year
 Private ResultEarnings As Result
 Private Const EARNINGS_SCORE_MAX = 4
 Private Const EARNINGS_SCORE_WEIGHT = 9
-Private ScoreEarnings As Integer
+Public ScoreEarnings As Integer
+Public Const MAX_EARNINGS_SCORE = 171
 
 '===============================================================
 ' Procedure:    EvaluateEPS
@@ -14,6 +15,14 @@ Private ScoreEarnings As Integer
 '               Call procedure to display YOY growth information
 '               flag pass/fail for three most recent years
 '               pass if positive, fail if negative
+'               Scoring:
+'               most recent year > 0
+'                   add EARNINGS_SCORE_MAX
+'                   subtract if earnings < 0
+'               most recent year - 1 > 0
+'                   add EARNINGS_SCORE_MAX
+'                   subtract if earnings < 0
+'               total score = score * EARNINGS_SCORE_WEIGHT
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -42,6 +51,7 @@ Sub EvaluateEPS()
             Else
                 Range("Earnings").Offset(0, i + 1).Font.ColorIndex = FONT_COLOR_RED
                 ResultEarnings = FAIL
+                ScoreEarnings = ScoreEarnings - (EARNINGS_SCORE_MAX - i)
             End If
             Range("Earnings").Offset(0, i + 1) = vEPS(i)
         Else
@@ -214,6 +224,14 @@ End Sub
 ' Description:  Display YOY growth information.
 '               if EPS < 0 or decreasing or growth is < EPS_GROWTH_MIN -> fail
 '               else if EPS growth >= EPS_GROWTH_MIN -> pass
+'               Scoring:
+'               most recent year > EPS_GROWTH_MIN
+'                   add EARNINGS_SCORE_MAX
+'                   subtract if growth < EPS_GROWTH_MIN
+'               most recent year - 1 > EPS_GROWTH_MIN
+'                   add EARNINGS_SCORE_MAX
+'                   subtract if growth < 0
+'               total score = score * EARNINGS_SCORE_WEIGHT
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -237,6 +255,9 @@ Function EvaluateEPSYOYGrowth(YOYGrowth As Range, YOY() As Double)
     If vEPS(i) < 0 Or YOY(i) < 0 Or YOY(i) < EPS_GROWTH_MIN Then   'if EPS is negative or decreases or less than required
         Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultEarnings = FAIL
+        If YOY(i) < 0 Then
+            ScoreEarnings = ScoreEarnings - (EARNINGS_SCORE_MAX - i)
+        End If
     Else                                                            'if EPS growth is greater than required
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
         ScoreEarnings = ScoreEarnings + (EARNINGS_SCORE_MAX - i)

@@ -7,7 +7,8 @@ Private Const QUICK_RATIO_MIN = 1
 Private ResultLiquidity As Result
 Private Const LIQUIDITY_SCORE_MAX = 4
 Private Const LIQUIDITY_SCORE_WEIGHT = 6
-Private ScoreLiquidity As Integer
+Public ScoreLiquidity As Integer
+Public Const MAX_LIQUIDITY_SCORE = 114
 
 '===============================================================
 ' Procedure:    EvaluateQuickRatio

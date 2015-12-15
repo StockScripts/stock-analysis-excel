@@ -287,6 +287,7 @@ Sub AssignCellItemsStockAnalysis()
     Range("E43").Name = "FreeCashFlowTTM"
     
     Range("H39:H40").Name = "TotalScore"
+    Range("H41:H42").Name = "Grade"
 End Sub
 
 '===============================================================
@@ -1022,6 +1023,16 @@ Sub FormatTotalScore()
         .HorizontalAlignment = xlCenter
         .VerticalAlignment = xlCenter
     End With
+    
+    With Range("Grade")
+        .Merge
+        .Font.Size = 20
+        .Font.ColorIndex = FONT_COLOR_BLUE
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        .NumberFormat = "0%"
+        .Value = Evaluate("=SUM(R[-38]C:R[-2]C)")
+    End With
 
 End Sub
 
@@ -1043,5 +1054,14 @@ End Sub
 '===============================================================
 Sub CalculateScore()
 
-    Range("TotalScore").FormulaR1C1 = "=SUM(R[-38]C:R[-2]C)"
+    Dim grade As String
+    Dim TotalScore As Integer
+    Dim MaxScore As Integer
+    
+    MaxScore = MAX_REVENUE_SCORE + MAX_REVENUE_SCORE + MAX_PROFITS_SCORE + MAX_CASH_FLOW_SCORE + MAX_ROE_SCORE + MAX_LEVERAGE_SCORE + MAX_LIQUIDITY_SCORE + MAX_RED_FLAGS_SCORE + PRICE_SCORE_MAX
+
+    TotalScore = ScoreRevenue + ScoreEarnings + ScoreProfits + ScoreCashFlow + ScoreROE + ScoreLeverage + ScoreLiquidity + ScoreRedFlags + ScorePrice
+    Range("TotalScore") = TotalScore
+    Range("Grade") = TotalScore / MaxScore
+       
 End Sub

@@ -6,7 +6,8 @@ Private ResultGrowth As Result
 Private Const ROE_MIN = 0.1
 Private Const ROE_SCORE_MAX = 4
 Private Const ROE_SCORE_WEIGHT = 6
-Private ScoreROE As Integer
+Public ScoreROE As Integer
+Public Const MAX_ROE_SCORE = 114
 
 '===============================================================
 ' Procedure:    EvaluateROE

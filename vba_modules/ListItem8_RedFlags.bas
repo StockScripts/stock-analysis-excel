@@ -10,7 +10,9 @@ Private dblSGAToSales(0 To 4) As Double
 Private ResultRedFlags As Result
 Private Const RED_FLAGS_SCORE_MAX = 4
 Private Const RED_FLAGS_SCORE_WEIGHT = 1
-Private ScoreRedFlags As Integer
+Public ScoreRedFlags As Integer
+Public Const MAX_RED_FLAGS_SCORE = 56
+
 
 '===============================================================
 ' Procedure:    EvaluateRedFlags

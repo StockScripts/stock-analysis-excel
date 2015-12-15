@@ -4,7 +4,8 @@ Option Explicit
 Private ResultCashFlow As Result
 Private Const CASH_FLOW_SCORE_MAX = 4
 Private Const CASH_FLOW_SCORE_WEIGHT = 6
-Private ScoreCashFlow As Integer
+Public ScoreCashFlow As Integer
+Public Const MAX_CASH_FLOW_SCORE = 114
 
 '===============================================================
 ' Procedure:    EvaluateFreeCashFlow
