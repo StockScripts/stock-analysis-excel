@@ -47,6 +47,7 @@ Sub EvaluateFreeCashFlow()
     Else
         Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultCashFlow = FAIL
+        ScoreCashFlow = ScoreCashFlow - (CASH_FLOW_SCORE_MAX - i)
     End If
     Selection.Value = dblFreeCashFlow(0)
     
