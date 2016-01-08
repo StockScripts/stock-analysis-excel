@@ -3,6 +3,7 @@ Option Explicit
 
 Private dblROE(0 To 4) As Double
 Private ResultGrowth As Result
+Private Const ROE_GROWTH_DECREASE_MAX = 0.1
 Private Const ROE_MIN = 0.1
 Private Const ROE_SCORE_MAX = 4
 Private Const ROE_SCORE_WEIGHT = 6
@@ -59,6 +60,9 @@ Sub EvaluateROE()
         Else
             Selection.Font.ColorIndex = FONT_COLOR_RED
             ResultGrowth = FAIL
+            If dblROE(0) < 0 Then
+                ScoreROE = ScoreROE - (ROE_SCORE_MAX * 2)
+            End If
         End If
         Selection.Value = dblROE(0)
     End If
@@ -77,6 +81,9 @@ Sub EvaluateROE()
             Else
                 Selection.Font.ColorIndex = FONT_COLOR_ORANGE
                 ResultGrowth = FAIL
+                If dblROE(i) < 0 Then
+                    ScoreROE = ScoreROE - (ROE_SCORE_MAX - i)
+                End If
             End If
             Selection.Value = dblROE(i)
         End If
@@ -296,15 +303,19 @@ Function EvaluateROEYOYGrowth(YOYGrowth As Range, YOY() As Double)
     Dim i As Integer
     
     YOYGrowth.Offset(0, 1).Select
+    If YOY(0) < 0 Then                              'if ROE is decreasing
+        Selection.Font.ColorIndex = FONT_COLOR_ORANGE
+        If YOY(0) < -(ROE_GROWTH_DECREASE_MAX) Then
+            ScoreROE = ScoreROE - ROE_SCORE_MAX
+        End If
+    Else                                                'ROE is stable or increasing
+        Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        ScoreROE = ScoreROE + ROE_SCORE_MAX
+    End If
+    
     If dblROE(0) < ROE_MIN Then                         'if ROE is less than required
         Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultGrowth = FAIL
-    ElseIf YOY(0) < 0 Then                              'if ROE is decreasing
-        Selection.Font.ColorIndex = FONT_COLOR_ORANGE
-    Else                                                'ROE is stable or increasing
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-        ScoreROE = ScoreROE + (ROE_SCORE_MAX - i)
-        
     End If
     Selection.Value = YOY(0)
         
@@ -312,6 +323,9 @@ Function EvaluateROEYOYGrowth(YOYGrowth As Range, YOY() As Double)
         YOYGrowth.Offset(0, i + 1).Select
         If dblROE(i) < ROE_MIN Or YOY(i) < 0 Then           'if ROE is less than required or decreasing
             Selection.Font.ColorIndex = FONT_COLOR_ORANGE
+            If YOY(i) < -(ROE_GROWTH_DECREASE_MAX) Then
+                ScoreROE = ScoreROE - (ROE_SCORE_MAX - i)
+            End If
         Else                                                'ROE is stable or increasing
             Selection.Font.ColorIndex = FONT_COLOR_GREEN
             ScoreROE = ScoreROE + (ROE_SCORE_MAX - i)

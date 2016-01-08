@@ -40,17 +40,6 @@ Sub EvaluateFreeCashFlow()
     ScoreCashFlow = 0
     
 '   populate free cash flow information
-    Range("FreeCashFlow").Offset(0, 1).Select
-    If dblFreeCashFlow(0) > 0 Then
-        Selection.Font.ColorIndex = FONT_COLOR_GREEN
-        ScoreCashFlow = ScoreCashFlow + (CASH_FLOW_SCORE_MAX - i)
-    Else
-        Selection.Font.ColorIndex = FONT_COLOR_RED
-        ResultCashFlow = FAIL
-        ScoreCashFlow = ScoreCashFlow - (CASH_FLOW_SCORE_MAX - i)
-    End If
-    Selection.Value = dblFreeCashFlow(0)
-    
     For i = 1 To (iYearsAvailableIncome - 1)
         Range("FreeCashFlow").Offset(0, i + 1).Select
         If dblFreeCashFlow(i) > 0 Then
@@ -61,6 +50,17 @@ Sub EvaluateFreeCashFlow()
         End If
         Selection.Value = dblFreeCashFlow(i)
     Next i
+    
+    Range("FreeCashFlow").Offset(0, 1).Select
+    If dblFreeCashFlow(0) > 0 Then
+        Selection.Font.ColorIndex = FONT_COLOR_GREEN
+        ScoreCashFlow = ScoreCashFlow + CASH_FLOW_SCORE_MAX
+    Else
+        Selection.Font.ColorIndex = FONT_COLOR_RED
+        ResultCashFlow = FAIL
+        ScoreCashFlow = ScoreCashFlow - (CASH_FLOW_SCORE_MAX * 2)
+    End If
+    Selection.Value = dblFreeCashFlow(0)
     
     DisplayFreeCashFlowInfo
     
@@ -104,9 +104,10 @@ Sub DisplayFreeCashFlowInfo()
                 "   Free cash flow is cash that a company generates after paying expenses." & Chr(10) & _
                 "Why is it important:" & Chr(10) & _
                 "   Free cash flow enhances value by allowing a company to develop new products, make" & Chr(10) & _
-                "   acquisitions, pay dividends, or reduce debt." & Chr(10) & _
+                "   acquisitions, pay dividends, or reduce debt. Growing free cash flows are frequently" & Chr(10) & _
+                "   a prelude to increased earnings." & Chr(10) & _
                 "What to look for:" & Chr(10) & _
-                "   The recent year free cash flow should be positive." & Chr(10) & _
+                "   Free cash flow should ideally be increasing, and the recent year should be positive." & Chr(10) & _
                 "What to watch for:" & Chr(10) & _
                 "   Free cash flow should not be continuously decreasing."
         .Comment.Shape.TextFrame.AutoSize = True

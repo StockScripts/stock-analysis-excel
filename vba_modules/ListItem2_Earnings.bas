@@ -227,7 +227,7 @@ End Sub
 '               Scoring:
 '               most recent year > EPS_GROWTH_MIN
 '                   add EARNINGS_SCORE_MAX
-'                   subtract if growth < EPS_GROWTH_MIN
+'                   subtract if growth < 0
 '               most recent year - 1 > EPS_GROWTH_MIN
 '                   add EARNINGS_SCORE_MAX
 '                   subtract if growth < 0
@@ -258,12 +258,24 @@ Function EvaluateEPSYOYGrowth(YOYGrowth As Range, YOY() As Double)
         If YOY(i) < 0 Then
             ScoreEarnings = ScoreEarnings - (EARNINGS_SCORE_MAX - i)
         End If
+    ElseIf YOY(i + 1) - YOY(i) > 0.15 And i < (iYearsAvailableIncome - 1) Then
+        Selection.Font.ColorIndex = FONT_COLOR_RED
+        ResultEarnings = FAIL
+        ScoreEarnings = ScoreEarnings - (EARNINGS_SCORE_MAX - i)
     Else                                                            'if EPS growth is greater than required
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
         ScoreEarnings = ScoreEarnings + (EARNINGS_SCORE_MAX - i)
     End If
     YOYGrowth.Offset(0, i + 1) = YOY(i)
     Next i
+    
+    Range("I7").FormulaR1C1 = "=STDEV.P(RC[-6]:RC[-4])"
+    If Range("I7").Value > 0.2 Then
+        ScoreEarnings = ScoreEarnings - 10
+    End If
+    If ScoreEarnings < 0 Then
+        ScoreEarnings = 0
+    End If
     
     ScoreEarnings = ScoreEarnings * EARNINGS_SCORE_WEIGHT
     CheckEarningsPassFail

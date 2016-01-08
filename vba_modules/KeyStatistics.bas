@@ -16,6 +16,8 @@ Global strSummaryROE As String
 Global strSummaryDebtToEquity As String
 Global strSummaryCurrentRatio As String
 Global strSummaryFreeCashFlow As String
+Global strSummaryPS As String
+Global strSummaryPB As String
 
 Sub CreateKeyStatistics()
 
@@ -186,6 +188,8 @@ Sub FormatKeyStatisticsSheet()
     GetDebtToEquityMRQ
     GetCurrentRatioMRQ
     GetFreeCashFlowTTM
+    GetPSTTM
+    GetPBMRQ
     
     GetTargetPrice
     GetCurrentPrice
@@ -558,4 +562,51 @@ ErrorHandler:
     
 End Sub
 
+Sub GetPSTTM()
+
+    Dim strPSttm As String
+    
+    On Error GoTo ErrorHandler
+    
+    'account item term to search for
+    strPSttm = "Price/Sales (ttm):"
+    
+    'find receivables account item
+    Columns("A:A").Select
+    Selection.Find(What:=strPSttm, After:=ActiveCell, LookIn:=xlFormulas, _
+        LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
+        MatchCase:=False, SearchFormat:=False).Select
+        
+    strSummaryPS = Selection.Offset(0, 1).Value
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    strSummaryPE = "N/A"
+End Sub
+
+Sub GetPBMRQ()
+
+    Dim strPBmrq As String
+    
+    On Error GoTo ErrorHandler
+    
+    'account item term to search for
+    strPBmrq = "Price/Book (mrq):"
+    
+    'find receivables account item
+    Columns("A:A").Select
+    Selection.Find(What:=strPBmrq, After:=ActiveCell, LookIn:=xlFormulas, _
+        LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, _
+        MatchCase:=False, SearchFormat:=False).Select
+        
+    strSummaryPB = Selection.Offset(0, 1).Value
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    strSummaryPB = "N/A"
+End Sub
 

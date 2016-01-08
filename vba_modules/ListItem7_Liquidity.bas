@@ -58,6 +58,7 @@ Sub EvaluateQuickRatio()
         Else
             Selection.Font.ColorIndex = FONT_COLOR_RED
             ResultLiquidity = FAIL
+            ScoreLiquidity = ScoreLiquidity - (LIQUIDITY_SCORE_MAX - i)
         End If
         Selection.Value = dblQuickRatio(0)
     End If

@@ -269,22 +269,24 @@ Sub AssignCellItemsStockAnalysis()
     
     'current statistics
     Range("A38:G38").Name = "CurrentStatsRow"
-    Range("B39:B43").Name = "CurrentStatsCol1"
-    Range("C39:C43").Name = "CurrentStatsCol2"
-    Range("E39:E43").Name = "CurrentStatsCol3"
-    Range("F39:F43").Name = "CurrentStatsCol4"
+    Range("B39:B44").Name = "CurrentStatsCol1"
+    Range("C39:C44").Name = "CurrentStatsCol2"
+    Range("E39:E44").Name = "CurrentStatsCol3"
+    Range("F39:F44").Name = "CurrentStatsCol4"
     
     Range("B39").Name = "MarketCap"
     Range("B40").Name = "PETTM"
     Range("B41").Name = "EPSTTM"
     Range("B42").Name = "DivYield"
     Range("B43").Name = "RevenueTTM"
+    Range("B44").Name = "PSTTM"
     
     Range("E39").Name = "ProfitMarginTTM"
     Range("E40").Name = "ROETTM"
     Range("E41").Name = "DebtToEquityMRQ"
     Range("E42").Name = "CurrentRatioMRQ"
     Range("E43").Name = "FreeCashFlowTTM"
+    Range("E44").Name = "PBMRQ"
     
     Range("H39:H40").Name = "TotalScore"
     Range("H41:H42").Name = "Grade"
@@ -1058,10 +1060,12 @@ Sub CalculateScore()
     Dim TotalScore As Integer
     Dim MaxScore As Integer
     
-    MaxScore = MAX_REVENUE_SCORE + MAX_REVENUE_SCORE + MAX_PROFITS_SCORE + MAX_CASH_FLOW_SCORE + MAX_ROE_SCORE + MAX_LEVERAGE_SCORE + MAX_LIQUIDITY_SCORE + MAX_RED_FLAGS_SCORE + PRICE_SCORE_MAX
+    MaxScore = MAX_REVENUE_SCORE + MAX_REVENUE_SCORE + MAX_PROFITS_SCORE + MAX_CASH_FLOW_SCORE + MAX_ROE_SCORE + MAX_LEVERAGE_SCORE + MAX_LIQUIDITY_SCORE + MAX_RED_FLAGS_SCORE
+    '+ PRICE_SCORE_MAX
 
     TotalScore = ScoreRevenue + ScoreEarnings + ScoreProfits + ScoreCashFlow + ScoreROE + ScoreLeverage + ScoreLiquidity + ScoreRedFlags + ScorePrice
     Range("TotalScore") = TotalScore
     Range("Grade") = TotalScore / MaxScore
+    Range("TotalScore").Offset(0, 1) = MaxScore
        
 End Sub

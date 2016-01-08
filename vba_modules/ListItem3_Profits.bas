@@ -3,7 +3,7 @@ Option Explicit
 
 Private dblNetMargin(0 To 4) As Double
 Private ResultProfits As Result
-Private Const PROFITS_GROWTH_DECREASE_MAX = 0.05
+Private Const PROFITS_GROWTH_DECREASE_MAX = 0.06
 Private Const PROFITS_SCORE_MAX = 4
 Private Const PROFITS_SCORE_WEIGHT = 6
 Public ScoreProfits As Integer
@@ -55,6 +55,11 @@ Sub EvaluateNetMargin()
             Else
                 Selection.Font.ColorIndex = FONT_COLOR_RED
                 ResultProfits = FAIL
+                If i = 0 Then
+                    ScoreProfits = ScoreProfits - (PROFITS_SCORE_MAX * 2)
+                Else
+                    ScoreProfits = ScoreProfits - (PROFITS_SCORE_MAX - i)
+                End If
             End If
             Selection.Value = dblNetMargin(i)
         End If
@@ -197,6 +202,14 @@ End Sub
 '               flag pass/fail for three most recent years
 '               if net margin decreases -> red font -> fail
 '               else net margin growth is positive -> green font -> pass
+'               Scoring:
+'               most recent year is > 0
+'                   add PROFITS_SCORE_MAX
+'                   subtract if revenue decreases
+'               most recent year - 1 > 0
+'                   add PROFITS_SCORE_MAX - 1
+'                   subtract if growth < PROFITS_GROWTH_DECREASE_MAX
+'               total score = score * PROFITS_SCORE_WEIGHT
 '
 ' Author:       Janice Laset Parkerson
 '
@@ -217,10 +230,10 @@ Function EvaluateNetMarginYOYGrowth(YOYGrowth As Range, YOY() As Double)
     
     For i = 0 To (iYearsAvailableIncome - 2)
         YOYGrowth.Offset(0, i + 1).Select
-        If dblNetMargin(i) < 0 Or YOY(i) < 0 Then     'if net margin is negative or net margin decreases
+        If dblNetMargin(i) < 0 Or YOY(i) < -(PROFITS_GROWTH_DECREASE_MAX) Then     'if net margin is negative or net margin decreases
             Selection.Font.ColorIndex = FONT_COLOR_RED
             ResultProfits = FAIL
-            If YOY(i) < -0.05 Then
+            If YOY(i) < -(PROFITS_GROWTH_DECREASE_MAX) Then
                 ScoreProfits = ScoreProfits - (PROFITS_SCORE_MAX - i)
             End If
         Else                                        'net margin is stable or increasing

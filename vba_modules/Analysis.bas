@@ -51,6 +51,13 @@ Sub AnalyzeStock()
     ie.Quit
     
     CreateChecklistStockAnalysis
+    
+    Application.DisplayAlerts = False
+    Sheets("Balance Sheet - " & strTickerSym).Delete
+    Sheets("Cash Flow - " & strTickerSym).Delete
+    Sheets("Income - " & strTickerSym).Delete
+    Sheets("Summary - " & strTickerSym).Delete
+    Application.DisplayAlerts = True
         
 End Sub
 

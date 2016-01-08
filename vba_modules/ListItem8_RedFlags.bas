@@ -11,7 +11,7 @@ Private ResultRedFlags As Result
 Private Const RED_FLAGS_SCORE_MAX = 4
 Private Const RED_FLAGS_SCORE_WEIGHT = 1
 Public ScoreRedFlags As Integer
-Public Const MAX_RED_FLAGS_SCORE = 56
+Public Const MAX_RED_FLAGS_SCORE = 60
 
 
 '===============================================================
@@ -523,6 +523,10 @@ Sub EvaluateDividendPerShare()
     For i = 0 To (iYearsAvailableIncome - 1)
         Range("Dividend").Offset(0, i + 1) = dblDividendPerShare(i)
     Next i
+    
+    If dblDividendPerShare(0) > 0 Then
+        ScoreRedFlags = ScoreRedFlags + RED_FLAGS_SCORE_MAX
+    End If
     
     CalculateDividendPerShareYOYGrowth
     

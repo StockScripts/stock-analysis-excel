@@ -3,7 +3,8 @@ Option Explicit
 
 Private ResultPrice As Result
 Private Const PRICE_GROWTH_POTENTIAL_MIN = 0.2
-Public Const PRICE_SCORE_MAX = 20
+Private Const PRICE_GROWTH_POTENTIAL_NEGATIVE = 0.1
+'Public Const PRICE_SCORE_MAX = 20
 Public ScorePrice As Integer
 
 '===============================================================
@@ -48,17 +49,20 @@ Sub EvaluatePrice()
     If dblPriceGrowthPotential >= PRICE_GROWTH_POTENTIAL_MIN Then
         Selection.Font.ColorIndex = FONT_COLOR_GREEN
         ResultPrice = PASS
-        ScorePrice = PRICE_SCORE_MAX
+'        ScorePrice = PRICE_SCORE_MAX
     Else
         Selection.Font.ColorIndex = FONT_COLOR_RED
         ResultPrice = FAIL
+'        If dblPriceGrowthPotential < PRICE_GROWTH_POTENTIAL_NEGATIVE Then
+'            ScorePrice = ScorePrice - PRICE_SCORE_MAX
+'        End If
     End If
     Range("PriceGrowth").Offset(0, 1) = dblPriceGrowthPotential
     
     DisplayPriceGrowthInfo
     
     CheckPricePassFail
-    PriceScore
+'    PriceScore
     
 End Sub
 
@@ -160,6 +164,6 @@ End Sub
 
 Sub PriceScore()
 
-    Range("PriceScore") = ScorePrice
+'    Range("PriceScore") = ScorePrice
 
 End Sub

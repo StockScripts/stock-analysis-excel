@@ -163,6 +163,10 @@ Function EvaluateRevenueYOYGrowth(YOYGrowth As Range, YOY() As Double)
             If YOY(i) < 0 Then
                 ScoreRevenue = ScoreRevenue - (REVENUE_SCORE_MAX - i)
             End If
+        ElseIf YOY(i + 1) - YOY(i) > 0.15 And i < (iYearsAvailableIncome - 1) Then
+            ScoreRevenue = ScoreRevenue - (REVENUE_SCORE_MAX - i)
+            Selection.Font.ColorIndex = FONT_COLOR_RED
+            ResultRevenue = FAIL
         Else
             Selection.Font.ColorIndex = FONT_COLOR_GREEN    'if revenue growth is greater than required
             ScoreRevenue = ScoreRevenue + (REVENUE_SCORE_MAX - i)
@@ -170,8 +174,17 @@ Function EvaluateRevenueYOYGrowth(YOYGrowth As Range, YOY() As Double)
         YOYGrowth.Offset(0, i + 1) = YOY(i)
     Next i
         
+    Range("I4").FormulaR1C1 = "=STDEV.P(RC[-6]:RC[-4])"
+    If Range("I4").Value > 0.2 Then
+        ScoreRevenue = ScoreRevenue - 10
+    End If
+    
+    If ScoreRevenue < 0 Then
+        ScoreRevenue = 0
+    End If
+    
     ScoreRevenue = ScoreRevenue * REVENUE_SCORE_WEIGHT
-
+    
     CheckRevenuePassFail
     RevenueScore
     

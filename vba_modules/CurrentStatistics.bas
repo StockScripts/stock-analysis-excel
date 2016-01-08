@@ -34,5 +34,11 @@ Sub DisplayCurrentStatistics()
     
     Range("FreeCashFlowTTM") = "Free Cash Flow (ttm)"
     Range("FreeCashFlowTTM").Offset(0, 1) = strSummaryFreeCashFlow
+    
+    Range("PSTTM") = "P/S (ttm)"
+    Range("PSTTM").Offset(0, 1) = strSummaryPS
+
+    Range("PBMRQ") = "P/B (mrq)"
+    Range("PBMRQ").Offset(0, 1) = strSummaryPB
 
 End Sub
